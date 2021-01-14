@@ -3,6 +3,7 @@ import zipfile
 import os.path as path
 import csv
 import networkx as nx
+import collections
 
 DATA_DIR = 'data'
 RESULTS_DIR = 'results'
@@ -70,6 +71,11 @@ def read_atp_matches_2018_dataset():
         else:
             players_2018_dictionary[winner_id] = [loser_id]
 
+        if loser_id in players_2018_dictionary:
+            players_2018_dictionary[loser_id].append(winner_id)
+        else:
+            players_2018_dictionary[loser_id] = [winner_id]
+
 
 def read_atp_matches_2019_dataset():
     atp_mathces_2019_dataset_header = None
@@ -101,14 +107,74 @@ def read_atp_matches_2019_dataset():
         else:
             players_2019_dictionary[winner_id] = [loser_id]
 
+        if loser_id in players_2019_dictionary:
+            players_2019_dictionary[loser_id].append(winner_id)
+        else:
+            players_2019_dictionary[loser_id] = [winner_id]
+
+
+def create_atp_matches_2018_network():
+    player_graph = nx.Graph()
+
+    player_graph.add_nodes_from(players_2018_dictionary.keys())
+
+    all_players_played_in_2018 = players_2018_dictionary.keys()
+
+    for player1 in all_players_played_in_2018:
+        distinct_opponents = list(set(players_2018_dictionary[player1]))
+        opponents_match_num = collections.Counter(players_2018_dictionary[player1])
+        print(opponents_match_num)
+        print(
+            '################################################################################################################################')
+        for player2 in distinct_opponents:
+            print('Player {player1} win over player {player2} {matches} times'.format(player1=player1, player2=player2,
+                                                                                      matches=opponents_match_num[
+                                                                                          player2]))
+
+            if player_graph.has_edge(player1, player2):
+                player_graph[player1][player2]['weight'] += opponents_match_num[player2]
+            else:
+                player_graph.add_edge(player1, player2, weight=opponents_match_num[player2])
+
+    player_graph.remove_edges_from(nx.selfloop_edges(player_graph))
+    return player_graph
+
+
+def create_atp_matches_2019_network():
+    player_graph = nx.Graph()
+
+    player_graph.add_nodes_from(players_2019_dictionary.keys())
+
+    all_players_played_in_2019 = players_2019_dictionary.keys()
+
+    for player1 in all_players_played_in_2019:
+        distinct_opponents = list(set(players_2019_dictionary[player1]))
+        opponents_match_num = collections.Counter(players_2019_dictionary[player1])
+        print(opponents_match_num)
+        print(
+            '################################################################################################################################')
+        for player2 in distinct_opponents:
+            print('Player {player1} win over player {player2} {matches} times'.format(player1=player1, player2=player2,
+                                                                                      matches=opponents_match_num[
+                                                                                          player2]))
+
+            if player_graph.has_edge(player1, player2):
+                player_graph[player1][player2]['weight'] += opponents_match_num[player2]
+            else:
+                player_graph.add_edge(player1, player2, weight=opponents_match_num[player2])
+
+    player_graph.remove_edges_from(nx.selfloop_edges(player_graph))
+    return player_graph
+
 
 def main():
     print("Starting script...")
     extract_secondary_dataset()
     read_atp_matches_2018_dataset()
     read_atp_matches_2019_dataset()
-    print(players_2018_dictionary)
-    print(players_2019_dictionary)
+
+    create_atp_matches_2018_network()
+    create_atp_matches_2018_network()
 
 if __name__ == "__main__":
     main()
