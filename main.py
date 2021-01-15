@@ -33,6 +33,7 @@ atp_matches_2018 = pd.DataFrame().empty
 players_2018_data = {}
 players_2019_data = {}
 
+
 def data_path(file_name):
     print("Returns relative path to data file passed as the argument.")
     return os.path.join(DATA_DIR, file_name)
@@ -318,7 +319,7 @@ def question5(players: nx.Graph, top: int = 10):
     csvFile.close()
 
 
-def count_players_by_country():
+def compute_count_players_by_country():
     full_winning_player_data = pd.merge(atp_players, atp_matches_2018,left_on='player_id',right_on='winner_id').drop_duplicates(['player_id'])
     full_winning_player_ids = full_winning_player_data['player_id']
     full_loser_player_data = pd.merge(atp_players,atp_matches_2018,left_on='player_id',right_on='loser_id').drop_duplicates(['player_id'])
@@ -330,8 +331,17 @@ def count_players_by_country():
 
 
 def question6():
-    country_count = count_players_by_country()
+    country_count = compute_count_players_by_country()
     print(country_count.head(10))
+
+
+# this method retrieves countries of best atp players on current date(last date in dataset)
+def question7():
+    current_date = current_player_ranking['ranking_date'].max()
+    full_player_data = pd.merge(current_player_ranking, atp_players,left_on='player_id',right_on='player_id')
+    countries = full_player_data[full_player_data['ranking_date'] == current_date].sort_values('rank')['country_code'].head(10)
+    print(countries)
+
 
 def main():
     print("Starting script...")
@@ -350,7 +360,6 @@ def main():
 
     question5(matches_2018_graph)
     question6()
-
-
+    question7()
 if __name__ == "__main__":
     main()
