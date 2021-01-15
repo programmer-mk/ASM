@@ -9,18 +9,26 @@ import matplotlib.pyplot as pl
 import time
 import math
 import datetime
+import inspect
+import pandas as pd
+
 
 DATA_DIR = 'data'
 RESULTS_DIR = 'results'
 ZIP_FILE_NAME = 'ASM_PZ2_podaci_2021.zip'
 ATP_MATCHES_2018_DATASET = 'atp_matches_2018.csv'
 ATP_MATCHES_2019_DATASET = 'atp_matches_2019.csv'
+ATP_CURRENT_RANKING_DATASET = 'data/atp_rankings_current.csv'
 
 atp_mathces_2018_dataset = []
 atp_mathces_2019_dataset = []
 players_2018_dictionary = {}
 players_2019_dictionary = {}
 
+current_player_ranking = pd.DataFrame().empty
+
+players_2018_data = {}
+players_2019_data = {}
 
 def data_path(file_name):
     print("Returns relative path to data file passed as the argument.")
@@ -31,9 +39,21 @@ def results_path(file_name):
     return os.path.join(RESULTS_DIR, file_name)
 
 
+def check():
+    print("Executing "+inspect.stack()[1].function)
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+
+
 def suffix():
     ts = time.time()
     return "___"+datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
+
+
+def load_current_player_ranking():
+    global current_player_ranking
+    current_player_ranking = pd.read_csv(ATP_CURRENT_RANKING_DATASET)
+    print(current_player_ranking.head())
 
 
 def extract_csv_from_zip(clean: bool = False):
@@ -194,16 +214,95 @@ def create_atp_matches_2019_network():
     return player_graph
 
 
+def sort_nodes_by_degree(graph):
+    ret = list(graph.degree(graph.nodes()))
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
+def sort_nodes_by_weighed_degree(graph):
+    ret = list(graph.degree(graph.nodes(), 'weight'))
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
+def question1(player_network: nx.Graph):
+    check()
+
+    n = player_network.number_of_nodes()
+    with open(results_path("q1.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Avg degree", "Avg weighed degree"])
+
+        avg_degree = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network))/n
+        avg_wdegree = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network))/n
+
+        writer.writerow([avg_degree, avg_wdegree])
+    csvFile.close()
+
+
+def question2(players: nx.Graph, top: int = 10):
+    check()
+
+    lst1 = sort_nodes_by_degree(players)[0:top]
+    lst2 = sort_nodes_by_weighed_degree(players)[0:top]
+
+    with open(results_path("q2.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Rank", "Top players", "Degree", "Top players", "Weighed degree"])
+
+        for rank in range(0, top):
+            writer.writerow([rank+1, lst1[rank][0], lst1[rank][1], lst2[rank][0], lst2[rank][1]])
+
+    csvFile.close()
+
+
+def question3():
+    print('skipped...')
+
+
+def question4():
+    print('Look into results of question 2')
+
+
+def get_atp_rank(player_id):
+    global current_player_ranking
+    atp_rang = current_player_ranking[current_player_ranking['player_id'] == int(player_id)].sort_values('Time', ascending=False)['atp_rank'].head(1).values[0]
+    print(atp_rang)
+    return atp_rang
+
+
+def question5(players: nx.Graph, top: int = 10):
+    lst1 = sort_nodes_by_degree(players)[0:top]
+    lst2 = sort_nodes_by_weighed_degree(players)[0:top]
+
+    with open(results_path("q5.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Rank", "Top players", "Degree", "Atp Rank", "Top players", "Weighed degree", "Atp Rank"])
+
+        for rank in range(0, top):
+            writer.writerow([rank+1, lst1[rank][0], lst1[rank][1], get_atp_rank(lst1[rank][0]), lst2[rank][0], lst2[rank][1], get_atp_rank(lst2[rank][0])])
+    csvFile.close()
+
+
 def main():
     print("Starting script...")
+    load_current_player_ranking()
     extract_secondary_dataset()
     read_atp_matches_2018_dataset()
     read_atp_matches_2019_dataset()
 
     matches_2018_graph = create_atp_matches_2018_network()
     matches_2019_graph = create_atp_matches_2019_network()
-    save_actor_graph_as_pdf(matches_2018_graph, 'r', 'player_matches_2018_graph.pdf')
-    save_actor_graph_as_pdf(matches_2019_graph, 'r', 'player_matches_2019_graph.pdf')
+    # save_actor_graph_as_pdf(matches_2018_graph, 'r', 'player_matches_2018_graph.pdf')
+    # save_actor_graph_as_pdf(matches_2019_graph, 'r', 'player_matches_2019_graph.pdf')
+
+    # make this generic, do compute for all graphs
+    question1(matches_2018_graph)
+    question2(matches_2018_graph)
+
+    question5(matches_2018_graph)
+
 
 if __name__ == "__main__":
     main()

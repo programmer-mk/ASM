@@ -10,3 +10,6 @@ venv/
 .idea/
 player_matches_2018_graph.pdf
 player_matches_2019_graph.pdf
+results/
+.DS_Store
+data/.DS_Store
