@@ -19,6 +19,7 @@ ZIP_FILE_NAME = 'ASM_PZ2_podaci_2021.zip'
 ATP_MATCHES_2018_DATASET = 'atp_matches_2018.csv'
 ATP_MATCHES_2019_DATASET = 'atp_matches_2019.csv'
 ATP_CURRENT_RANKING_DATASET = 'data/atp_rankings_current.csv'
+ATP_PLAYERS_DATASET = 'data/atp_players.csv'
 
 atp_mathces_2018_dataset = []
 atp_mathces_2019_dataset = []
@@ -26,6 +27,8 @@ players_2018_dictionary = {}
 players_2019_dictionary = {}
 
 current_player_ranking = pd.DataFrame().empty
+atp_players = pd.DataFrame().empty
+atp_matches_2018 = pd.DataFrame().empty
 
 players_2018_data = {}
 players_2019_data = {}
@@ -50,16 +53,39 @@ def suffix():
     return "___"+datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
 
 
+def add_missing_header_to_dataset(headers, dataset):
+    with open(dataset,newline='') as f:
+        r = csv.reader(f)
+        data = [line for line in r]
+    with open(dataset,'w',newline='') as f:
+        w = csv.writer(f)
+        w.writerow(headers)
+        w.writerows(data)
+
+
 def load_current_player_ranking():
     global current_player_ranking
     current_player_ranking = pd.read_csv(ATP_CURRENT_RANKING_DATASET)
     print(current_player_ranking.head())
 
 
+def load_atp_players():
+    global atp_players
+    atp_players = pd.read_csv(ATP_PLAYERS_DATASET)
+    print(atp_players.head())
+
+
+def load_atp_matches_2018():
+    global atp_matches_2018
+    atp_matches_2018 = pd.read_csv(f'data/{ATP_MATCHES_2018_DATASET}')
+    print(atp_matches_2018.head())
+
+
 def extract_csv_from_zip(clean: bool = False):
     print("Extracts the data from the provided zip file if no extracted data is found.")
     if (not clean) and path.isfile(data_path(ATP_MATCHES_2018_DATASET)):
         print(ATP_MATCHES_2018_DATASET + ' already extracted.')
+        return True
     else:
         print('Extracting data from ' + ZIP_FILE_NAME)
         exists = os.path.isfile(data_path(ZIP_FILE_NAME))
@@ -69,10 +95,17 @@ def extract_csv_from_zip(clean: bool = False):
 
         with zipfile.ZipFile(data_path(ZIP_FILE_NAME), 'r') as zip_ref:
             zip_ref.extractall(DATA_DIR)
+        return False
 
 
 def extract_secondary_dataset(clean: bool = False):
-    extract_csv_from_zip(clean)
+    already_extracted = extract_csv_from_zip(clean)
+    if not already_extracted:
+        add_missing_header_to_dataset(['ranking_date', 'rank', 'player_id', 'points'], ATP_CURRENT_RANKING_DATASET)
+        add_missing_header_to_dataset(['player_id', 'first_name', 'last_name', 'hand', 'birth_date', 'country_code'], ATP_PLAYERS_DATASET)
+    load_current_player_ranking()
+    load_atp_players()
+    load_atp_matches_2018()
 
 
 def read_atp_matches_2018_dataset():
@@ -267,7 +300,7 @@ def question4():
 
 def get_atp_rank(player_id):
     global current_player_ranking
-    atp_rang = current_player_ranking[current_player_ranking['player_id'] == int(player_id)].sort_values('Time', ascending=False)['atp_rank'].head(1).values[0]
+    atp_rang = current_player_ranking[current_player_ranking['player_id'] == int(player_id)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
     print(atp_rang)
     return atp_rang
 
@@ -285,9 +318,23 @@ def question5(players: nx.Graph, top: int = 10):
     csvFile.close()
 
 
+def count_players_by_country():
+    full_winning_player_data = pd.merge(atp_players, atp_matches_2018,left_on='player_id',right_on='winner_id').drop_duplicates(['player_id'])
+    full_winning_player_ids = full_winning_player_data['player_id']
+    full_loser_player_data = pd.merge(atp_players,atp_matches_2018,left_on='player_id',right_on='loser_id').drop_duplicates(['player_id'])
+    full_loser_player_ids = full_loser_player_data['player_id']
+    all_player_ids = pd.concat([full_winning_player_ids, full_loser_player_ids], axis=0)
+    distinct_players = all_player_ids.drop_duplicates(keep='first').to_frame()
+    count_players_by_country = pd.merge(atp_players,distinct_players,left_on='player_id',right_on='player_id')
+    return count_players_by_country.groupby('country_code')['player_id'].count().sort_values(ascending=False)
+
+
+def question6():
+    country_count = count_players_by_country()
+    print(country_count.head(10))
+
 def main():
     print("Starting script...")
-    load_current_player_ranking()
     extract_secondary_dataset()
     read_atp_matches_2018_dataset()
     read_atp_matches_2019_dataset()
@@ -302,6 +349,7 @@ def main():
     question2(matches_2018_graph)
 
     question5(matches_2018_graph)
+    question6()
 
 
 if __name__ == "__main__":
