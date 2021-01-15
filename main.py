@@ -1,9 +1,14 @@
+import math
 import os
 import zipfile
 import os.path as path
 import csv
 import networkx as nx
 import collections
+import matplotlib.pyplot as pl
+import time
+import math
+import datetime
 
 DATA_DIR = 'data'
 RESULTS_DIR = 'results'
@@ -20,6 +25,15 @@ players_2019_dictionary = {}
 def data_path(file_name):
     print("Returns relative path to data file passed as the argument.")
     return os.path.join(DATA_DIR, file_name)
+
+
+def results_path(file_name):
+    return os.path.join(RESULTS_DIR, file_name)
+
+
+def suffix():
+    ts = time.time()
+    return "___"+datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
 
 
 def extract_csv_from_zip(clean: bool = False):
@@ -113,6 +127,19 @@ def read_atp_matches_2019_dataset():
             players_2019_dictionary[loser_id] = [winner_id]
 
 
+def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
+    #pos = nx.spring_layout(actor_graph, iterations=5000, )
+    #pos = nx.random_layout(actor_graph)
+    number_of_nodes: int = len(actor_graph.nodes())
+    n: int = 4
+    pos = nx.spring_layout(actor_graph, k=(1/math.sqrt(number_of_nodes))*n)
+    pl.figure(figsize=(20, 20))  # Don't create a humongous figure
+    nx.draw_networkx(actor_graph, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=color)
+    pl.axis('off')
+    pl.show()
+    pl.savefig(file_name, format='pdf', dpi=900)
+
+
 def create_atp_matches_2018_network():
     player_graph = nx.Graph()
 
@@ -173,8 +200,10 @@ def main():
     read_atp_matches_2018_dataset()
     read_atp_matches_2019_dataset()
 
-    create_atp_matches_2018_network()
-    create_atp_matches_2018_network()
+    matches_2018_graph = create_atp_matches_2018_network()
+    matches_2019_graph = create_atp_matches_2019_network()
+    save_actor_graph_as_pdf(matches_2018_graph, 'r', 'player_matches_2018_graph.pdf')
+    save_actor_graph_as_pdf(matches_2019_graph, 'r', 'player_matches_2019_graph.pdf')
 
 if __name__ == "__main__":
     main()

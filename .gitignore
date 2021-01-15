@@ -8,3 +8,5 @@ data/atp_players.csv
 data/atp_rankings_current.csv
 venv/
 .idea/
+player_matches_2018_graph.pdf
+player_matches_2019_graph.pdf
