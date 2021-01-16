@@ -3,14 +3,19 @@ import os
 import zipfile
 import os.path as path
 import csv
+import matplotlib
 import networkx as nx
+from networkx.algorithms import community
 import collections
 import matplotlib.pyplot as pl
+from matplotlib import colors as mcolors
 import time
 import math
 import datetime
 import inspect
 import pandas as pd
+import numpy as np
+from collections import Counter
 
 
 DATA_DIR = 'data'
@@ -194,11 +199,30 @@ def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
     pl.savefig(file_name, format='pdf', dpi=900)
 
 
+def add_players_to_graph(player_graph, player_dictionary):
+    players = list(player_dictionary.keys())
+    player_countries = list(atp_players[atp_players['player_id'] == int(player)]['country_code'].unique()[0] for player in players)
+
+    player_rankings = []
+    for player in players:
+        # latest rank will be used
+        rank = int()
+        if current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].empty:
+            # not active players on last noticed date(don't have rank)
+            rank = -1
+        else:
+            rank = current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
+        player_rankings.append(rank)
+    # TODO: group by country and give list of nodes to add_nodes_from
+    for index in range(len(players)):
+        s = players[index]
+        player_graph.add_nodes_from([players[index]], country=player_countries[index], rank=player_rankings[index])
+    return player_graph
+
+
 def create_atp_matches_2018_network():
     player_graph = nx.Graph()
-
-    player_graph.add_nodes_from(players_2018_dictionary.keys())
-
+    player_graph = add_players_to_graph(player_graph,players_2018_dictionary)
     all_players_played_in_2018 = players_2018_dictionary.keys()
 
     for player1 in all_players_played_in_2018:
@@ -223,9 +247,7 @@ def create_atp_matches_2018_network():
 
 def create_atp_matches_2019_network():
     player_graph = nx.Graph()
-
-    player_graph.add_nodes_from(players_2019_dictionary.keys())
-
+    player_graph = add_players_to_graph(player_graph, players_2019_dictionary)
     all_players_played_in_2019 = players_2019_dictionary.keys()
 
     for player1 in all_players_played_in_2019:
@@ -343,6 +365,92 @@ def question7():
     print(countries)
 
 
+def generate_communities(actor_network: nx.Graph):
+    communities_generator = community.girvan_newman(actor_network)
+    top_level_communities = next(communities_generator)
+    next_level_communities = next(communities_generator)
+    answer = sorted(map(sorted, next_level_communities))
+    return answer
+
+
+def random_color():
+    #dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+    colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+
+    # Sort colors by hue, saturation, value and name.
+    by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
+                    for name, color in colors.items())
+    cls = [name for hsv, name in by_hsv]
+    return cls[np.random.choice(range(len(cls)))]
+
+
+def question9(player_network: nx.Graph):
+    check()
+    answer = generate_communities(player_network)
+
+    with open(results_path("q9.csv"), 'w', newline='') as csvFile:
+        #writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        for index in range(-1, len(answer[0])+1):
+            if index == -1:
+                csvFile.write("")
+                for i in range(0, len(answer)):
+                    csvFile.write(", Commune "+str(i))
+            else:
+                for commune in answer:
+                    csvFile.write(", ")
+                    if index < len(commune):
+                        csvFile.write(commune[index])
+            csvFile.write("\r\n")
+
+    csvFile.close()
+
+    colors = list()
+    community_colors = list()
+    for comm in answer:
+        community_colors.append(random_color())
+
+    for node in player_network.nodes():
+        for index in range(0, len(answer)):
+            if answer[index].__contains__(node):
+                break
+        colors.append(community_colors[index])
+
+    #save_actor_graph_as_pdf(actor_network, color=colors, fileName="q4.pdf")
+
+    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q4.pdf"))
+    number_of_nodes: int = len(player_network.nodes())
+    n: int = 4
+    pos = nx.spring_layout(player_network, k=(1 / math.sqrt(number_of_nodes)) * n)
+    pl.figure(figsize=(20, 20))  # Don't create a humongous figure
+    nx.draw_networkx(player_network, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=colors)
+    pl.axis('off')
+    pdf.savefig(pl.gcf(), dpi=900)
+
+    fig = pl.figure(figsize=(20, 20))
+    ax = fig.add_subplot(111)
+    pl.title('Distribution of actors across clusters')
+
+    cluter_counter = Counter(colors)
+
+    frequencies = cluter_counter.values()
+    names = list(cluter_counter.keys())
+
+    x_coordinates = np.arange(len(cluter_counter))
+    ax.bar(x_coordinates, frequencies, align='center', color=names)
+
+    ax.xaxis.set_major_locator(pl.FixedLocator(x_coordinates))
+    ax.xaxis.set_major_formatter(pl.FixedFormatter(names))
+    pdf.savefig(fig, dpi=900)
+
+    pdf.close()
+
+
+def question10(player_network: nx.Graph):
+    print(nx.attribute_assortativity_coefficient(player_network, "rank"))
+    print(nx.attribute_assortativity_coefficient(player_network, "country"))
+    print(nx.attribute_assortativity_coefficient(player_network, "weight"))
+
 def main():
     print("Starting script...")
     extract_secondary_dataset()
@@ -356,10 +464,12 @@ def main():
 
     # make this generic, do compute for all graphs
     question1(matches_2018_graph)
-    question2(matches_2018_graph)
+    question2(matches_2019_graph)
 
     question5(matches_2018_graph)
     question6()
     question7()
+
+
 if __name__ == "__main__":
     main()
