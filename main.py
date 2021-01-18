@@ -796,6 +796,25 @@ def question19(player_network: nx.Graph):
 
     csvFile.close()
 
+
+# iscrtati ego mreze za nadala, djokovica i federera -> q20
+# proveri gde se ti cvorovi nalaze u mrezi, kako su rasporedjeni u odnosu na ostale, koliko veza imaju i slicno -> q21
+# videti da iscrtas mrezu celu(3 puta) posebno za novaka, nadala i federera i obojis te cvorove posebnom bojom na dijagramu -> q22
+# spojiti sve tri mreze i izvrsiti obradu iz pitanja
+
+
+def question20(player_network: nx.Graph):
+    ego_network = nx.ego_graph(player_network, 'Djokovic_id')
+    print(f"Nodes ego network player Djokovic are:  {ego_network.nodes}")
+    pl.figure(figsize=(15,10))
+    edge_weights = nx.get_edge_attributes(player_network,'weight')
+    pos = nx.circular_layout(player_network)
+    #pos = nx.spring_layout(ego_mreza)
+    #print(pos)
+    nx.draw_networkx(player_network, pos)
+    nx.draw_networkx_edge_labels(player_network, pos, edge_labels = edge_weights)
+
+
 def main():
     print("Starting script...")
     extract_secondary_dataset()
