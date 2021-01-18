@@ -19,6 +19,8 @@ from collections import Counter
 from matplotlib.backends.backend_pdf import PdfPages
 import networkx.algorithms.community.quality as qual
 import scipy.stats as stats
+import operator
+from operator import itemgetter
 
 
 DATA_DIR = 'data'
@@ -882,16 +884,69 @@ def question19(player_network: nx.Graph):
 # spojiti sve tri mreze i izvrsiti obradu iz pitanja
 
 
+def draw_ego_network(player_network: nx.Graph, player_name):
+    player_id = {
+        'Novak Djokovic': '104925',
+        'Rafael Nadal': '104745',
+        'Roger Federer': '103819',
+    }
+    ego_network = nx.ego_graph(player_network, player_id.get(player_name))
+    print(f"Nodes ego network player {player_name} are:  {ego_network.nodes}")
+
+    # find node with largest degree
+    node_and_degree = ego_network.degree()
+    (largest_hub, degree) = sorted(node_and_degree, key=itemgetter(1))[-1]
+
+    # Create ego graph of main hub
+    hub_ego = nx.ego_graph(ego_network, largest_hub)
+
+    # Draw graph
+    pl.figure(figsize=(20, 20))  # Don't create a humongous figure
+    pos = nx.spring_layout(hub_ego)
+    nx.draw(hub_ego, pos, node_color="b", node_size=50, with_labels=False)
+
+    # Draw ego as large and red
+    options = {"node_size": 300, "node_color": "r"}
+    nx.draw_networkx_nodes(hub_ego, pos, nodelist=[largest_hub], **options)
+    #pl.show()
+    pl.savefig(f"results/q20_{player_name}.pdf", format='pdf', dpi=900)
+
+
 def question20(player_network: nx.Graph):
-    ego_network = nx.ego_graph(player_network, 'Djokovic_id')
-    print(f"Nodes ego network player Djokovic are:  {ego_network.nodes}")
-    pl.figure(figsize=(15,10))
-    edge_weights = nx.get_edge_attributes(player_network,'weight')
-    pos = nx.circular_layout(player_network)
-    #pos = nx.spring_layout(ego_mreza)
-    #print(pos)
-    nx.draw_networkx(player_network, pos)
-    nx.draw_networkx_edge_labels(player_network, pos, edge_labels = edge_weights)
+    draw_ego_network(player_network, 'Novak Djokovic')
+    draw_ego_network(player_network, 'Rafael Nadal')
+    draw_ego_network(player_network, 'Roger Federer')
+
+
+def draw_ego_network_position_in_full_network(player_network, player_name):
+    # player_name on which ego network is built
+    player_id = {
+        'Novak Djokovic': '104925',
+        'Rafael Nadal': '104745',
+        'Roger Federer': '103819',
+    }
+
+    ego_network = nx.ego_graph(player_network, player_id.get(player_name))
+    print(f"Nodes ego network player {player_name} are:  {ego_network.nodes}")
+
+    all_players = list(player_network.nodes)
+    ego_network_players = list(ego_network.nodes)
+    node_colors = []
+    for player in all_players:
+        if player in ego_network_players:
+            node_colors.append(0.7)
+        else:
+            node_colors.append(0.1)
+
+    pl.figure(figsize=(10, 10))  # Don't create a humongous figure
+    nx.draw(player_network, node_color=node_colors, with_labels=False, font_color='white', node_size=5)
+    pl.savefig(f"results/q22_{player_name}.pdf", format='pdf', dpi=900)
+
+
+def question22(player_network: nx.Graph):
+    draw_ego_network_position_in_full_network(player_network, 'Novak Djokovic')
+    draw_ego_network_position_in_full_network(player_network, 'Rafael Nadal')
+    draw_ego_network_position_in_full_network(player_network, 'Roger Federer')
 
 
 def main():
@@ -921,7 +976,9 @@ def main():
     #question14(matches_2018_graph)
     #question15(matches_2018_graph)
     #question16(matches_2018_graph)
-    question17(matches_2018_graph)
+    #question17(matches_2018_graph)
+    #question20(matches_2018_graph)
+    question22(matches_2018_graph)
 
 if __name__ == "__main__":
     main()
