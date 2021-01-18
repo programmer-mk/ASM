@@ -16,6 +16,9 @@ import inspect
 import pandas as pd
 import numpy as np
 from collections import Counter
+from matplotlib.backends.backend_pdf import PdfPages
+import networkx.algorithms.community.quality as qual
+import scipy.stats as stats
 
 
 DATA_DIR = 'data'
@@ -450,7 +453,7 @@ def question9(player_network: nx.Graph):
 
     #save_actor_graph_as_pdf(actor_network, color=colors, fileName="q4.pdf")
 
-    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q4.pdf"))
+    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q9.pdf"))
     number_of_nodes: int = len(player_network.nodes())
     n: int = 4
     pos = nx.spring_layout(player_network, k=(1 / math.sqrt(number_of_nodes)) * n)
@@ -478,16 +481,73 @@ def question9(player_network: nx.Graph):
     pdf.close()
 
 
+def clustering_analyse(player_network: nx.Graph):
+    player_id, clustering_coef = zip(*nx.clustering(player_network, weight = "weight").items())
+    non_zero = [(id_ig, cc)  for id_ig, cc in zip(player_id, clustering_coef) if cc > 0]
+
+    df = pd.DataFrame(non_zero, columns = ["id", "cc"])
+    df.sort_values('cc', inplace = True)
+
+    max_local_clustering_degree = max(clustering_coef)
+    average_clustering_degree = nx.average_clustering(player_network)
+
+    global_clustering_coef = nx.transitivity(player_network)
+    communities = generate_communities(player_network)
+    modularity_undirected = qual.modularity(player_network, communities)
+
+    print(f"Max local cc: {max_local_clustering_degree}")
+    print(f"Average cc: {average_clustering_degree}")
+    print(f"Global cc: {global_clustering_coef}")
+    print(f"clusters modularity: {modularity_undirected}")
+    print("Local non-zero cc:")
+    print(df)
+
+
 def question10(player_network: nx.Graph):
+    clustering_analyse(player_network)
     print(nx.attribute_assortativity_coefficient(player_network, "rank"))
     print(nx.attribute_assortativity_coefficient(player_network, "country"))
-    print(nx.attribute_assortativity_coefficient(player_network, "weight"))
+    print(nx.degree_assortativity_coefficient(player_network))
 
 
-# def question11(player_network: nx.Graph):
-#    compare weighted and non-weighted graph
-#    write with matplotlib 2D diagram based on that number and atp rank
-#    compare results there
+def compare_weighted_and_regular_graph(player_network: nx.Graph):
+    regular = list(player_network.degree(player_network.nodes()))
+    weighted = list(player_network.degree(player_network.nodes(), 'weight'))
+    sum = 0
+    results = []
+    player_ids = []
+    for i in range(0, len(regular)):
+        results.append(weighted[i][1] / regular[i][1])
+        sum += weighted[i][1] / regular[i][1]
+        player_ids.append(regular[i][0])
+
+
+    return sum / len(player_network.nodes()),results,player_ids
+
+
+def question11(player_network: nx.Graph):
+    average, results, players = compare_weighted_and_regular_graph(player_network)
+    print(average)
+    players_rank = []
+    test = int()
+    for player in players:
+        if current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].empty:
+            # not active players on last noticed date(don't have rank)
+            rank = -10
+            test += 1
+            players_rank.append(rank)
+        else:
+            rank = current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
+            players_rank.append(rank)
+
+    print(test)
+    pl.plot(results, players_rank, 'ro')
+    #pl.axis([0, 20, 0, 5000])
+    pl.show()
+
+    # compare weighted and non-weighted graph
+    #write with matplotlib 2D diagram based on that number and atp rank
+    #compare results there
 
 
 def question12(player_network: nx.Graph, top: int=10):
@@ -585,19 +645,19 @@ def question15(player_network: nx.Graph):
         row = ["Normalized degree centrality", n1, n2, n3]
         writer.writerow(row)
 
-        n1 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-        n2 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-        n3 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-
-        row = ["Eigenvector centrality", n1, n2, n3]
-        writer.writerow(row)
-
-        n1 = my_avg(nx.katz_centrality_numpy(player_network))
-        n2 = my_avg(nx.katz_centrality_numpy(player_network))
-        n3 = my_avg(nx.katz_centrality_numpy(player_network))
-
-        row = ["Katz centrality", n1, n2, n3]
-        writer.writerow(row)
+        # n1 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+        # n2 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+        # n3 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+        #
+        # row = ["Eigenvector centrality", n1, n2, n3]
+        # writer.writerow(row)
+        #
+        # n1 = my_avg(nx.katz_centrality_numpy(player_network))
+        # n2 = my_avg(nx.katz_centrality_numpy(player_network))
+        # n3 = my_avg(nx.katz_centrality_numpy(player_network))
+        #
+        # row = ["Katz centrality", n1, n2, n3]
+        # writer.writerow(row)
 
         n1 = my_avg(nx.edge_betweenness_centrality(player_network))
         n2 = my_avg(nx.edge_betweenness_centrality(player_network))
@@ -717,18 +777,36 @@ def question16(player_network: nx.Graph):
     csvFile.close()
 
 
+def compute_correlation_rank_and_degree(player_network):
+    degrees = pd.DataFrame([val for (node, val) in player_network.degree()])
+    players = [node for (node, val) in player_network.degree()]
+    ranks = []
+    for player in players:
+        if current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].empty:
+            # not active players on last noticed date(don't have rank)
+            rank = -10
+            ranks.append(rank)
+        else:
+            rank = current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
+            ranks.append(rank)
+
+    frame_ranks = pd.DataFrame(ranks)
+    x, y = stats.kendalltau(degrees,frame_ranks)
+    print(x) #  correlation
+    return x
+
+
 def question17(player_network: nx.Graph):
     check()
 
     pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q17.pdf"))
-
     fig = pl.figure()
     pl.title('Player network - distribution of node degrees')
     pl.hist([val for (node, val) in player_network.degree()], bins=50)
     pdf.savefig(fig, dpi=900)
-
-
     pdf.close()
+
+    print(compute_correlation_rank_and_degree(player_network))
 
 
 def question18(player_network: nx.Graph):
@@ -739,6 +817,7 @@ def question18(player_network: nx.Graph):
 
 def number_of_triangles(graph: nx.Graph):
     return sum(x for x in nx.triangles(graph).values())/3
+
 
 def number_of_paths_len_2(graph: nx.Graph):
     cnt: int = 0
@@ -833,7 +912,16 @@ def main():
     question5(matches_2018_graph)
     question6()
     question7()
+    #question9(matches_2018_graph)
 
+    #question10(matches_2018_graph)
+    #question11(matches_2018_graph)
+    #question12(matches_2018_graph)
+    #question13(matches_2018_graph)
+    #question14(matches_2018_graph)
+    #question15(matches_2018_graph)
+    #question16(matches_2018_graph)
+    question17(matches_2018_graph)
 
 if __name__ == "__main__":
     main()
