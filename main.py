@@ -87,6 +87,38 @@ def load_atp_matches_2018():
     print(atp_matches_2018.head())
 
 
+def sored_nodes_on_betweenness_centrality(graph: nx.Graph):
+    ret = []
+    bc = nx.betweenness_centrality(graph)
+    for node in graph.nodes():
+        ret.append([node,  bc[node]])
+
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
+def sorted_nodes_on_degree_centrality(graph: nx.Graph):
+    ret = list()
+    dc = nx.degree_centrality(graph)
+    for node in graph.nodes():
+        ret.append([node, dc[node]])
+
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
+def sorted_nodes_on_bc_dc(bc: list, dc: list):
+    ret = list()
+    for item1 in bc:
+        for item2 in dc:
+            if item1[0] == item2[0]:
+                ret.append([item1[0], item1[1]*item2[1]])
+                break
+
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
 def extract_csv_from_zip(clean: bool = False):
     print("Extracts the data from the provided zip file if no extracted data is found.")
     if (not clean) and path.isfile(data_path(ATP_MATCHES_2018_DATASET)):
@@ -450,6 +482,319 @@ def question10(player_network: nx.Graph):
     print(nx.attribute_assortativity_coefficient(player_network, "rank"))
     print(nx.attribute_assortativity_coefficient(player_network, "country"))
     print(nx.attribute_assortativity_coefficient(player_network, "weight"))
+
+
+# def question11(player_network: nx.Graph):
+#    compare weighted and non-weighted graph
+#    write with matplotlib 2D diagram based on that number and atp rank
+#    compare results there
+
+
+def question12(player_network: nx.Graph, top: int=10):
+    check()
+    with open(results_path("q12.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["Players in the center of the network"]
+        writer.writerow(row)
+
+        subgraph = player_network.subgraph(generate_communities(player_network)[0])
+        #periphery = nx.periphery(subgraph)
+        answer = nx.closeness_centrality(subgraph)
+        answer = sorted(answer.items(), key= lambda x: x[1], reverse=True)[:top]
+        writer.writerows(answer)
+
+        '''
+        for item in generate_communities(actor_network)[0]:
+            if actor_network.degree(item) > degree_treshold:
+                row = [item]
+                writer.writerow(row)
+        '''
+    csvFile.close()
+
+
+def question13(player_network: nx.Graph, top: int = 10):
+    check()
+
+    with open(results_path("q13.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["", "Player", "Top BC", "Player", "Top DC", "Player", "Top DC*BC"]
+        writer.writerow(row)
+
+        bc = sored_nodes_on_betweenness_centrality(player_network)
+        dc = sorted_nodes_on_degree_centrality(player_network)
+        bc_dc = sorted_nodes_on_bc_dc(bc, dc)
+
+        for i in range(0,top):
+            row = [i,bc[i][0], bc[i][1],dc[i][0], dc[i][1],bc_dc[i][0], bc_dc[i][1]]
+            writer.writerow(row)
+
+    csvFile.close()
+
+
+def question14(player_network: nx.Graph):
+    check()
+
+    with open(results_path("q14.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["Player18 density", "Player19 Density", "Player20 density"]
+        writer.writerow(row)
+        row = [nx.density(player_network),nx.density(player_network),nx.density(player_network)]
+        writer.writerow(row)
+
+    csvFile.close()
+
+
+def my_sum(lst: dict):
+    return sum(x for x in lst.values())
+
+
+def my_avg(lst: dict):
+    return my_sum(lst)/len(lst)
+
+
+def question15(player_network: nx.Graph):
+    check()
+
+    with open(results_path("q15.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["", "Player18", "Player19", "Player20"]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.closeness_centrality(player_network))
+        n2 = my_avg(nx.closeness_centrality(player_network))
+        n3 = my_avg(nx.closeness_centrality(player_network))
+
+        row = ["Closeness centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.betweenness_centrality(player_network))
+        n2 = my_avg(nx.betweenness_centrality(player_network))
+        n3 = my_avg(nx.betweenness_centrality(player_network))
+
+        row = ["Betweenness centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.degree_centrality(player_network))
+        n2 = my_avg(nx.degree_centrality(player_network))
+        n3 = my_avg(nx.degree_centrality(player_network))
+
+        row = ["Normalized degree centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+        n2 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+        n3 = my_avg(nx.eigenvector_centrality_numpy(player_network))
+
+        row = ["Eigenvector centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.katz_centrality_numpy(player_network))
+        n2 = my_avg(nx.katz_centrality_numpy(player_network))
+        n3 = my_avg(nx.katz_centrality_numpy(player_network))
+
+        row = ["Katz centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = my_avg(nx.edge_betweenness_centrality(player_network))
+        n2 = my_avg(nx.edge_betweenness_centrality(player_network))
+        n3 = my_avg(nx.edge_betweenness_centrality(player_network))
+
+        row = ["Edge betweenness centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        # Error
+        '''
+        print(nx.percolation_centrality(actor_network))
+        n1 = my_avg(nx.percolation_centrality(actor_network))
+        n2 = my_avg(nx.percolation_centrality(genre_network))
+        n3 = my_avg(nx.percolation_centrality(movie_network))
+        
+        row = ["Percolation centrality", n1, n2, n3]
+        writer.writerow(row)
+        '''
+
+        n1 = my_avg(nx.pagerank(player_network))
+        n2 = my_avg(nx.pagerank(player_network))
+        n3 = my_avg(nx.pagerank(player_network))
+
+        row = ["PageRank centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = nx.global_reaching_centrality(player_network)
+        n2 = nx.global_reaching_centrality(player_network)
+        n3 = nx.global_reaching_centrality(player_network)
+
+        row = ["Global reaching centrality", n1, n2, n3]
+        writer.writerow(row)
+
+        row = []
+        writer.writerow(row)
+
+        n1 = nx.node_connectivity(player_network)
+        n2 = nx.node_connectivity(player_network)
+        n3 = nx.node_connectivity(player_network)
+
+        row = ["Node connectivity", n1, n2, n3]
+        writer.writerow(row)
+
+        n1 = nx.edge_connectivity(player_network)
+        n2 = nx.edge_connectivity(player_network)
+        n3 = nx.edge_connectivity(player_network)
+
+        row = ["Edge connectivity", n1, n2, n3]
+        writer.writerow(row)
+
+    csvFile.close()
+
+
+def my_average_shortest_path(graph: nx.Graph):
+    cnt: int = 0
+    length: int = 0
+
+    for node1 in graph.nodes():
+        for node2 in graph.nodes():
+            if node1 != node2 and nx.has_path(graph, node1, node2):
+                length += len(nx.shortest_path(graph, node1, node2))-1
+                cnt += 1
+
+    return length/cnt
+
+
+def question16(player_network: nx.Graph):
+    check()
+
+    with open(results_path("q16.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["Player18 average distance", "Player19 average distance", "Player20 average distance"]
+        writer.writerow(row)
+
+        try:
+            n1 = my_average_shortest_path(player_network)
+        except nx.exception.NetworkXError:
+            n1 = 'graph is not connected'
+
+        try:
+            n2 = my_average_shortest_path(player_network)
+        except nx.exception.NetworkXError:
+            n2 = 'graph is not connected'
+
+        try:
+            n3 = my_average_shortest_path(player_network)
+        except nx.exception.NetworkXError:
+            n3 = 'graph is not connected'
+
+        row = [n1,n2,n3]
+        writer.writerow(row)
+
+        row = ["","",""]
+        writer.writerow(row)
+
+        row = ["Player18 diameter", "Player19 diameter", "Player20 diameter"]
+        writer.writerow(row)
+        try:
+            n1 = nx.diameter(player_network)
+        except nx.exception.NetworkXError:
+            n1 = 'graph is not connected'
+
+        try:
+            n2 = nx.diameter(player_network)
+        except nx.exception.NetworkXError:
+            n2 = 'graph is not connected'
+
+        try:
+            n3 = nx.diameter(player_network)
+        except nx.exception.NetworkXError:
+            n3 = 'graph is not connected'
+
+        row = [n1,n2,n3]
+        writer.writerow(row)
+
+    csvFile.close()
+
+
+def question17(player_network: nx.Graph):
+    check()
+
+    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q17.pdf"))
+
+    fig = pl.figure()
+    pl.title('Player network - distribution of node degrees')
+    pl.hist([val for (node, val) in player_network.degree()], bins=50)
+    pdf.savefig(fig, dpi=900)
+
+
+    pdf.close()
+
+
+def question18(player_network: nx.Graph):
+    # hubs and authority scores for each node
+    scores = nx.hits(player_network, 5)
+    return scores
+
+
+def number_of_triangles(graph: nx.Graph):
+    return sum(x for x in nx.triangles(graph).values())/3
+
+def number_of_paths_len_2(graph: nx.Graph):
+    cnt: int = 0
+    for node1 in graph.nodes():
+        for node2 in graph.nodes():
+            if node1 != node2:
+                for path in nx.all_simple_paths(graph, source=node1, target=node2, cutoff=2):
+                    if len(path) == 2:
+                        cnt+=1
+    return cnt
+
+
+def c_del(graph: nx.Graph):
+    return (3*number_of_triangles(graph))/number_of_paths_len_2(graph)
+
+
+def gam(graph: nx.Graph, rand: nx.Graph):
+    return c_del(graph)/c_del(rand)
+
+
+def lam(graph: nx.Graph, rand: nx.Graph):
+    return my_average_shortest_path(graph)/ my_average_shortest_path(rand)
+
+
+def s(graph: nx.Graph):
+    n = graph.number_of_nodes()
+    m = graph.number_of_edges()
+    p = 2*m/(n*(n-1))
+    rand = nx.erdos_renyi_graph(n,p)
+
+    return gam(graph, rand)/lam(graph,rand)
+
+
+def is_small_world(graph: nx.Graph):
+    return s(graph) > 1
+
+
+def question19(player_network: nx.Graph):
+    check()
+
+    with open(results_path("q12.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["Network", "Is small world?"]
+        writer.writerow(row)
+
+        row = ["Player18", is_small_world(player_network)]
+        writer.writerow(row)
+
+        row = ["Player19", is_small_world(player_network)]
+        writer.writerow(row)
+
+        row = ["Player20", is_small_world(player_network)]
+        writer.writerow(row)
+
+    csvFile.close()
 
 def main():
     print("Starting script...")
