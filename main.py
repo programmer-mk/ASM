@@ -21,7 +21,7 @@ import networkx.algorithms.community.quality as qual
 import scipy.stats as stats
 import operator
 from operator import itemgetter
-
+from pandas import DataFrame
 
 DATA_DIR = 'data'
 RESULTS_DIR = 'results'
@@ -949,6 +949,118 @@ def question22(player_network: nx.Graph):
     draw_ego_network_position_in_full_network(player_network, 'Roger Federer')
 
 
+def question23(player_network: nx.Graph):
+    djokovic_ego_network = nx.ego_graph(player_network, '104925')
+    nadal_ego_network = nx.ego_graph(player_network, '104745')
+    federer_ego_network = nx.ego_graph(player_network, '103819')
+
+    combined1_network = nx.compose(djokovic_ego_network,nadal_ego_network)
+    full_combined = nx.compose(combined1_network, federer_ego_network)
+    print(full_combined)
+    # do clustering of this network to 3 clusters
+
+
+def matches_and_players_distribution(player_network: nx.Graph, year):
+    check()
+    ret = list(player_network.degree(player_network.nodes(), 'weight'))
+    # here column shouldn't be called 'number_of_players', it should be 'player_id',
+    # but bacause rename is not working we don't want 'player_id' on plot
+    df = DataFrame(ret, columns=['number_of_players', 'game_played'])
+    df.groupby('game_played')['number_of_players'].count().to_frame().plot(kind='bar', color='r',
+      figsize=(20,10), title=f'Distribution of games played by player numbers - {year}')
+
+    #pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q24.pdf"))
+
+    #pl.title('Player network - distribution of node degrees')
+    #pl.plot(games_played(0), games_played(1), 'ro')
+    #pl.axis([0, 20, 0, 5000])
+    #pdf.savefig(games_played, dpi=900)
+    #pdf.close()
+
+
+def tournaments_and_surface_distribution(year):
+    check()
+    # put here 2019 and 2020
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2018,
+        '2020': atp_matches_2018
+    }
+    distinct_tournaments = matches.get(year).drop_duplicates( subset='tourney_id', keep='first', inplace=False)
+    df = pd.DataFrame(distinct_tournaments.groupby('surface')['tourney_id'].count())
+    df.columns = ['number_of_tournaments']
+    df.plot(kind='bar', color='r', figsize=(20,10), title=f'Distribution of tournaments by surface - {year}')
+    print(df)
+
+
+def tournaments_per_year_distribution(year):
+    check()
+    # put here 2019 and 2020
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2018,
+        '2020': atp_matches_2018
+    }
+    distinct_tournaments = matches.get(year).drop_duplicates( subset='tourney_id', keep='first', inplace=False)
+    return distinct_tournaments.shape
+
+
+def matches_per_year_distribution(year):
+    check()
+    # put here 2019 and 2020
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2018,
+        '2020': atp_matches_2018
+    }
+    return matches.get(year).shape
+
+
+def question24(player_network: nx.Graph):
+    matches_and_players_distribution(player_network, '2018')
+    matches_and_players_distribution(player_network, '2019')
+    matches_and_players_distribution(player_network, '2020')
+
+
+def question25():
+    tournaments_and_surface_distribution('2018')
+    tournaments_and_surface_distribution('2019')
+    tournaments_and_surface_distribution('2020')
+
+    tournaments_2018, _ = tournaments_per_year_distribution('2018')
+    tournaments_2019, _ = tournaments_per_year_distribution('2019')
+    tournaments_2020, _ = tournaments_per_year_distribution('2020')
+    #pl.figure()
+    pl.plot(['2018', '2019', '2020'], [tournaments_2018, tournaments_2019, tournaments_2020], 'ro')
+
+
+def matches_number_and_surface_distribution(year):
+    check()
+    # put here 2019 and 2020
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2018,
+        '2020': atp_matches_2018
+    }
+    distinct_matches = matches.get(year)
+    df = pd.DataFrame(distinct_matches['surface'].value_counts())
+    df.columns = ['number_of_games']
+    df.plot(kind='bar', color='r', figsize=(20,10), title=f'Distribution of matches number by surface - {year}', )
+    print(df)
+
+
+def question26():
+    matches_number_and_surface_distribution('2018')
+    matches_number_and_surface_distribution('2019')
+    matches_number_and_surface_distribution('2020')
+
+    matches_count_2018, _ = matches_per_year_distribution('2018')
+    matches_count_2019, _ = matches_per_year_distribution('2019')
+    matches_count_2020, _ = matches_per_year_distribution('2020')
+    pl.figure(figsize=(20,10))
+    pl.plot(['2018', '2019', '2020'], [matches_count_2018, matches_count_2019, matches_count_2020], 'ro')
+
+
 def main():
     print("Starting script...")
     extract_secondary_dataset()
@@ -978,7 +1090,12 @@ def main():
     #question16(matches_2018_graph)
     #question17(matches_2018_graph)
     #question20(matches_2018_graph)
-    question22(matches_2018_graph)
+    #question22(matches_2018_graph)
+    #question23(matches_2018_graph)
+    #question24(matches_2018_graph)
+    #question25()
+    question26()
+
 
 if __name__ == "__main__":
     main()
