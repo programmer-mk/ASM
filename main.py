@@ -28,17 +28,22 @@ RESULTS_DIR = 'results'
 ZIP_FILE_NAME = 'ASM_PZ2_podaci_2021.zip'
 ATP_MATCHES_2018_DATASET = 'atp_matches_2018.csv'
 ATP_MATCHES_2019_DATASET = 'atp_matches_2019.csv'
+ATP_MATCHES_2020_DATASET = 'atp_matches_2020.csv'
 ATP_CURRENT_RANKING_DATASET = 'data/atp_rankings_current.csv'
 ATP_PLAYERS_DATASET = 'data/atp_players.csv'
 
 atp_mathces_2018_dataset = []
 atp_mathces_2019_dataset = []
+atp_mathces_2020_dataset = []
 players_2018_dictionary = {}
 players_2019_dictionary = {}
+players_2020_dictionary = {}
 
 current_player_ranking = pd.DataFrame().empty
 atp_players = pd.DataFrame().empty
 atp_matches_2018 = pd.DataFrame().empty
+atp_matches_2019 = pd.DataFrame().empty
+atp_matches_2020 = pd.DataFrame().empty
 
 players_2018_data = {}
 players_2019_data = {}
@@ -90,6 +95,18 @@ def load_atp_matches_2018():
     global atp_matches_2018
     atp_matches_2018 = pd.read_csv(f'data/{ATP_MATCHES_2018_DATASET}')
     print(atp_matches_2018.head())
+
+
+def load_atp_matches_2019():
+    global atp_matches_2019
+    atp_matches_2019 = pd.read_csv(f'data/{ATP_MATCHES_2019_DATASET}')
+    print(atp_matches_2019.head())
+
+
+def load_atp_matches_2020():
+    global atp_matches_2020
+    atp_matches_2020 = pd.read_csv(f'data/{ATP_MATCHES_2020_DATASET}')
+    print(atp_matches_2020.head())
 
 
 def sored_nodes_on_betweenness_centrality(graph: nx.Graph):
@@ -149,6 +166,8 @@ def extract_secondary_dataset(clean: bool = False):
     load_current_player_ranking()
     load_atp_players()
     load_atp_matches_2018()
+    load_atp_matches_2019()
+    load_atp_matches_2020()
 
 
 def read_atp_matches_2018_dataset():
@@ -221,6 +240,42 @@ def read_atp_matches_2019_dataset():
             players_2019_dictionary[loser_id].append(winner_id)
         else:
             players_2019_dictionary[loser_id] = [winner_id]
+
+
+def read_atp_matches_2020_dataset():
+    atp_mathces_2020_dataset_header = None
+    with open(data_path(ATP_MATCHES_2020_DATASET), 'r') as csvFile:
+        reader = csv.reader(csvFile)
+
+        # Read primary dataset.
+        for row in reader:
+            if atp_mathces_2020_dataset_header is None:
+                atp_mathces_2020_dataset_header = row
+            else:
+                atp_mathces_2020_dataset.append(row)
+    csvFile.close()
+
+    # Get indexes of columns of interest.
+    winner_id_index = atp_mathces_2020_dataset_header.index("winner_id")
+    winner_name_index = atp_mathces_2020_dataset_header.index("winner_name")
+    loser_id_index = atp_mathces_2020_dataset_header.index("loser_id")
+    loser_name_index = atp_mathces_2020_dataset_header.index("loser_name")
+
+    for row in atp_mathces_2020_dataset:
+        winner_id = row[winner_id_index]
+        winner_name = row[winner_name_index]
+        loser_id = row[loser_id_index]
+        loser_name = row[loser_name_index]
+
+        if winner_id in players_2020_dictionary:
+            players_2020_dictionary[winner_id].append(loser_id)
+        else:
+            players_2020_dictionary[winner_id] = [loser_id]
+
+        if loser_id in players_2020_dictionary:
+            players_2020_dictionary[loser_id].append(winner_id)
+        else:
+            players_2020_dictionary[loser_id] = [winner_id]
 
 
 def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
@@ -307,6 +362,37 @@ def create_atp_matches_2019_network():
     return player_graph
 
 
+def create_aggregated_network(first_graph, second_graph, third_graph):
+    first_half = nx.compose(first_graph,second_graph)
+    full_graph = nx.compose(first_half, third_graph)
+    return full_graph
+
+
+def create_atp_matches_2020_network():
+    player_graph = nx.Graph()
+    player_graph = add_players_to_graph(player_graph, players_2020_dictionary)
+    all_players_played_in_2020 = players_2020_dictionary.keys()
+
+    for player1 in all_players_played_in_2020:
+        distinct_opponents = list(set(players_2020_dictionary[player1]))
+        opponents_match_num = collections.Counter(players_2020_dictionary[player1])
+        print(opponents_match_num)
+        print(
+            '################################################################################################################################')
+        for player2 in distinct_opponents:
+            print('Player {player1} win over player {player2} {matches} times'.format(player1=player1, player2=player2,
+                                                                                      matches=opponents_match_num[
+                                                                                          player2]))
+
+            if player_graph.has_edge(player1, player2):
+                player_graph[player1][player2]['weight'] += opponents_match_num[player2]
+            else:
+                player_graph.add_edge(player1, player2, weight=opponents_match_num[player2])
+
+    player_graph.remove_edges_from(nx.selfloop_edges(player_graph))
+    return player_graph
+
+
 def sort_nodes_by_degree(graph):
     ret = list(graph.degree(graph.nodes()))
     ret.sort(key=lambda x: x[1], reverse=True)
@@ -319,33 +405,87 @@ def sort_nodes_by_weighed_degree(graph):
     return ret
 
 
-def question1(player_network: nx.Graph):
+def question1(player_network_2018: nx.Graph, player_network_2019: nx.Graph,
+              player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     check()
-
-    n = player_network.number_of_nodes()
+    players_num_2018 = player_network_2018.number_of_nodes()
+    players_num_2019 = player_network_2019.number_of_nodes()
+    players_num_2020 = player_network_2020.number_of_nodes()
+    players_num_aggregated = player_network_aggregated.number_of_nodes()
     with open(results_path("q1.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(["Avg degree", "Avg weighed degree"])
-
-        avg_degree = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network))/n
-        avg_wdegree = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network))/n
-
-        writer.writerow([avg_degree, avg_wdegree])
+        writer.writerow(["Avg degree-2018", "Avg weighed degree-2018", "Avg degree-2019", "Avg weighed degree-2019",
+                         "Avg degree-2020", "Avg weighed degree-2020", "Avg degree-aggregated", "Avg weighed degree-aggregated"])
+        avg_degree_2018 = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network_2018))/players_num_2018
+        avg_wdegree_2018 = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network_2018))/players_num_2018
+        avg_degree_2019 = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network_2019))/players_num_2019
+        avg_wdegree_2019 = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network_2019))/players_num_2019
+        avg_degree_2020 = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network_2020))/players_num_2020
+        avg_wdegree_2020 = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network_2020))/players_num_2020
+        avg_degree_aggregated = sum(degrees[1] for degrees in sort_nodes_by_degree(player_network_aggregated))/players_num_aggregated
+        avg_wdegree_aggregated = sum(degrees[1] for degrees in sort_nodes_by_weighed_degree(player_network_aggregated))/players_num_aggregated
+        writer.writerow([avg_degree_2018, avg_wdegree_2018, avg_degree_2019, avg_wdegree_2019,
+                         avg_degree_2020, avg_wdegree_2020, avg_degree_aggregated, avg_wdegree_aggregated ])
     csvFile.close()
 
 
-def question2(players: nx.Graph, top: int = 10):
+def question2(players_2018: nx.Graph, players_2019: nx.Graph, players_2020: nx.Graph, players_aggregated: nx.Graph,top: int = 10):
     check()
 
-    lst1 = sort_nodes_by_degree(players)[0:top]
-    lst2 = sort_nodes_by_weighed_degree(players)[0:top]
+    lst1_2018 = sort_nodes_by_degree(players_2018)[0:top]
+    lst2_2018 = sort_nodes_by_weighed_degree(players_2018)[0:top]
+
+    lst1_2019 = sort_nodes_by_degree(players_2019)[0:top]
+    lst2_2019 = sort_nodes_by_weighed_degree(players_2019)[0:top]
+
+    lst1_2020 = sort_nodes_by_degree(players_2020)[0:top]
+    lst2_2020 = sort_nodes_by_weighed_degree(players_2020)[0:top]
+
+    lst1_aggregated = sort_nodes_by_degree(players_aggregated)[0:top]
+    lst2_aggregated = sort_nodes_by_weighed_degree(players_aggregated)[0:top]
 
     with open(results_path("q2.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(["Rank", "Top players", "Degree", "Top players", "Weighed degree"])
+        writer.writerow(["Rank", "Top players", "Degree", "Top players", "Weighed degree", "year"])
 
         for rank in range(0, top):
-            writer.writerow([rank+1, lst1[rank][0], lst1[rank][1], lst2[rank][0], lst2[rank][1]])
+            first_name = atp_players[atp_players['player_id'] == int(lst1_2018[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(lst1_2018[rank][0])]['last_name'].head(1).values[0]
+
+            first_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2018[rank][0])]['first_name'].head(1).values[0]
+            last_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2018[rank][0])]['last_name'].head(1).values[0]
+
+            writer.writerow([rank+1, first_name + ' ' + last_name, lst1_2018[rank][1], first_name_weighted + ' ' + last_name_weighted, lst2_2018[rank][1], '2018'])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(lst1_2019[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(lst1_2019[rank][0])]['last_name'].head(1).values[0]
+
+            first_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2019[rank][0])]['first_name'].head(1).values[0]
+            last_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2019[rank][0])]['last_name'].head(1).values[0]
+
+            writer.writerow([rank+1, first_name + ' ' + last_name, lst1_2019[rank][1], first_name_weighted + ' ' + last_name_weighted, lst2_2019[rank][1], '2019'])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(lst1_2020[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(lst1_2020[rank][0])]['last_name'].head(1).values[0]
+
+            first_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2020[rank][0])]['first_name'].head(1).values[0]
+            last_name_weighted = atp_players[atp_players['player_id'] == int(lst2_2020[rank][0])]['last_name'].head(1).values[0]
+
+            writer.writerow([rank+1, first_name + ' ' + last_name, lst1_2020[rank][1], first_name_weighted + ' ' + last_name_weighted, lst2_2020[rank][1], '2020'])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(lst1_aggregated[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(lst1_aggregated[rank][0])]['last_name'].head(1).values[0]
+
+            first_name_weighted = atp_players[atp_players['player_id'] == int(lst2_aggregated[rank][0])]['first_name'].head(1).values[0]
+            last_name_weighted = atp_players[atp_players['player_id'] == int(lst2_aggregated[rank][0])]['last_name'].head(1).values[0]
+
+            writer.writerow([rank+1, first_name + ' ' + last_name, lst1_aggregated[rank][1], first_name_weighted + ' ' + last_name_weighted, lst2_aggregated[rank][1], 'aggregated'])
 
     csvFile.close()
 
@@ -1066,19 +1206,23 @@ def main():
     extract_secondary_dataset()
     read_atp_matches_2018_dataset()
     read_atp_matches_2019_dataset()
+    read_atp_matches_2020_dataset()
 
     matches_2018_graph = create_atp_matches_2018_network()
     matches_2019_graph = create_atp_matches_2019_network()
+    matches_2020_graph = create_atp_matches_2020_network()
+    matches_year_aggregated_graph = create_aggregated_network(matches_2018_graph, matches_2019_graph, matches_2020_graph)
+
     # save_actor_graph_as_pdf(matches_2018_graph, 'r', 'player_matches_2018_graph.pdf')
     # save_actor_graph_as_pdf(matches_2019_graph, 'r', 'player_matches_2019_graph.pdf')
 
     # make this generic, do compute for all graphs
-    question1(matches_2018_graph)
-    question2(matches_2019_graph)
+    #question1(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
-    question5(matches_2018_graph)
-    question6()
-    question7()
+    #question5(matches_2018_graph)
+    #question6()
+    #question7()
     #question9(matches_2018_graph)
 
     #question10(matches_2018_graph)
@@ -1094,7 +1238,7 @@ def main():
     #question23(matches_2018_graph)
     #question24(matches_2018_graph)
     #question25()
-    question26()
+    #question26()
 
 
 if __name__ == "__main__":
