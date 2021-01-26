@@ -490,8 +490,63 @@ def question2(players_2018: nx.Graph, players_2019: nx.Graph, players_2020: nx.G
     csvFile.close()
 
 
+def most_tournaments_played(year, top=10):
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2018,
+        '2020': atp_matches_2018
+    }
+
+    players = {
+        '2018': players_2018_dictionary,
+        '2019': players_2019_dictionary,
+        '2020': players_2020_dictionary
+    }
+
+    result_dictionary = {}
+    for player in players.get(year):
+        tournaments_with_win = set(matches.get(year)[matches.get(year)['winner_id'] == int(player)]['tourney_id'])
+        tournaments_with_lose = set(matches.get(year)[matches.get(year)['loser_id'] == int(player)]['tourney_id'])
+        distinct_tournaments_num = tournaments_with_win.union(tournaments_with_lose)
+        result_dictionary[player] = distinct_tournaments_num
+
+    print('sorting dictionary ...')
+    result_dictionary = sorted(result_dictionary.items(), key=lambda x: len(x[1]), reverse=True)
+    return result_dictionary[0:top]
+
+
+def create_output_question3(results_2018, results_2019, results_2020, top=10):
+
+    with open(results_path("q3.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Rank", "Top players", "Tournaments played", "Year"])
+
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(results_2018[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(results_2018[rank][0])]['last_name'].head(1).values[0]
+            writer.writerow([rank+1, first_name + ' ' + last_name, len(results_2018[rank][1]), '2018'])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(results_2019[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(results_2019[rank][0])]['last_name'].head(1).values[0]
+            writer.writerow([rank+1, first_name + ' ' + last_name, len(results_2019[rank][1]), '2019'])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            first_name = atp_players[atp_players['player_id'] == int(results_2020[rank][0])]['first_name'].head(1).values[0]
+            last_name = atp_players[atp_players['player_id'] == int(results_2020[rank][0])]['last_name'].head(1).values[0]
+            writer.writerow([rank+1, first_name + ' ' + last_name, len(results_2020[rank][1]), '2020'])
+        writer.writerow([])
+
+    csvFile.close()
+
+
 def question3():
-    print('skipped...')
+    results_2018 = most_tournaments_played('2018', 10)
+    results_2019 = most_tournaments_played('2019', 10)
+    results_2020 = most_tournaments_played('2020', 10)
+    create_output_question3(results_2018, results_2019, results_2020, 10)
 
 
 def question4():
@@ -1218,7 +1273,8 @@ def main():
 
     # make this generic, do compute for all graphs
     #question1(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question3()
 
     #question5(matches_2018_graph)
     #question6()
