@@ -654,11 +654,8 @@ def random_color():
     return cls[np.random.choice(range(len(cls)))]
 
 
-def question9(player_network: nx.Graph):
-    check()
-    answer = generate_communities(player_network)
-
-    with open(results_path("q9.csv"), 'w', newline='') as csvFile:
+def question_9_output(answer, player_network, year):
+    with open(results_path(f"q9-{year}.csv"), 'w', newline='') as csvFile:
         #writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
         for index in range(-1, len(answer[0])+1):
@@ -674,7 +671,6 @@ def question9(player_network: nx.Graph):
             csvFile.write("\r\n")
 
     csvFile.close()
-
     colors = list()
     community_colors = list()
     for comm in answer:
@@ -688,7 +684,7 @@ def question9(player_network: nx.Graph):
 
     #save_actor_graph_as_pdf(actor_network, color=colors, fileName="q4.pdf")
 
-    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q9.pdf"))
+    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path(f"q9-{year}.pdf"))
     number_of_nodes: int = len(player_network.nodes())
     n: int = 4
     pos = nx.spring_layout(player_network, k=(1 / math.sqrt(number_of_nodes)) * n)
@@ -699,7 +695,7 @@ def question9(player_network: nx.Graph):
 
     fig = pl.figure(figsize=(20, 20))
     ax = fig.add_subplot(111)
-    pl.title('Distribution of actors across clusters')
+    pl.title('Distribution of players across clusters')
 
     cluter_counter = Counter(colors)
 
@@ -714,6 +710,18 @@ def question9(player_network: nx.Graph):
     pdf.savefig(fig, dpi=900)
 
     pdf.close()
+
+
+def question9(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
+    check()
+    answer_2018 = generate_communities(player_network_2018)
+    answer_2019 = generate_communities(player_network_2019)
+    answer_2020 = generate_communities(player_network_2020)
+    answer_aggregated = generate_communities(player_network_aggregated)
+    question_9_output(answer_2018, player_network_2018, '2018')
+    question_9_output(answer_2019, player_network_2019, '2019')
+    question_9_output(answer_2020, player_network_2020, '2020')
+    question_9_output(answer_aggregated, player_network_aggregated, 'aggregated')
 
 
 def clustering_analyse(player_network: nx.Graph):
@@ -760,7 +768,7 @@ def compare_weighted_and_regular_graph(player_network: nx.Graph):
     return sum / len(player_network.nodes()),results,player_ids
 
 
-def question11(player_network: nx.Graph):
+def tendency_to_play_with_same_players(player_network, year):
     average, results, players = compare_weighted_and_regular_graph(player_network)
     print(average)
     players_rank = []
@@ -779,15 +787,19 @@ def question11(player_network: nx.Graph):
     pl.plot(results, players_rank, 'ro')
     #pl.axis([0, 20, 0, 5000])
     pl.show()
-
-    # compare weighted and non-weighted graph
-    #write with matplotlib 2D diagram based on that number and atp rank
-    #compare results there
+    pl.savefig(f'results/q11-{year}.pdf')
 
 
-def question12(player_network: nx.Graph, top: int=10):
+def question11(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph,player_network_aggregated: nx.Graph):
+    tendency_to_play_with_same_players(player_network_2018, '2018')
+    tendency_to_play_with_same_players(player_network_2019, '2019')
+    tendency_to_play_with_same_players(player_network_2020, '2020')
+    tendency_to_play_with_same_players(player_network_aggregated, 'aggregated')
+
+
+def found_center_of_network(player_network: nx.Graph, year, top: int=10):
     check()
-    with open(results_path("q12.csv"), 'w', newline='') as csvFile:
+    with open(results_path(f"q12-{year}.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
         row = ["Players in the center of the network"]
@@ -806,6 +818,13 @@ def question12(player_network: nx.Graph, top: int=10):
                 writer.writerow(row)
         '''
     csvFile.close()
+
+
+def question12(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph,player_network_aggregated: nx.Graph):
+    found_center_of_network(player_network_2018, '2018')
+    found_center_of_network(player_network_2019, '2019')
+    found_center_of_network(player_network_2020, '2020')
+    found_center_of_network(player_network_aggregated, 'aggregated')
 
 
 def question13(player_network: nx.Graph, top: int = 10):
@@ -1315,13 +1334,13 @@ def main():
     #question3()
 
     #question5(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question6()
+    #question6()
     #question7()
-    #question9(matches_2018_graph)
+    #question9(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
     #question10(matches_2018_graph)
-    #question11(matches_2018_graph)
-    #question12(matches_2018_graph)
+    #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question13(matches_2018_graph)
     #question14(matches_2018_graph)
     #question15(matches_2018_graph)
