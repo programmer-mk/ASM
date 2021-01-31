@@ -1019,10 +1019,26 @@ def question17(player_network_2018: nx.Graph, player_network_2019: nx.Graph, pla
     node_degrees_distribution(player_network_aggregated, 'aggregated')
 
 
-def question18(player_network: nx.Graph):
+def question18(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     # hubs and authority scores for each node
-    scores = nx.hits(player_network, 5)
-    return scores
+    # not sure how much iterations i need to set here
+    scores_2018 = nx.hits(player_network_2018, 100)[0]
+    scores_2019 = nx.hits(player_network_2019, 100)[0]
+    scores_2020 = nx.hits(player_network_2020, 100)[0]
+    scores_aggregated = nx.hits(player_network_aggregated, 100)[0]
+
+    scores_2018 = {k: v for k, v in sorted(scores_2018.items(), key=lambda item: item[1], reverse=True)}
+    scores_2018 = {k: v for k, v in sorted(scores_2018.items(), key=lambda item: item[1], reverse=True)}
+    scores_2018 = {k: v for k, v in sorted(scores_2018.items(), key=lambda item: item[1], reverse=True)}
+    scores_aggregated = {k: v for k, v in sorted(scores_aggregated.items(), key=lambda item: item[1], reverse=True)}
+
+    N = 3
+    print(list(scores_2018.items())[:N])
+    print(list(scores_2019.items())[:N])
+    print(list(scores_2020.items())[:N])
+    print(list(scores_aggregated.items())[:N])
+    print('hubs founded')
+
 
 
 def number_of_triangles(graph: nx.Graph):
@@ -1301,7 +1317,8 @@ def main():
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question20(matches_2018_graph)
     #question22(matches_2018_graph)
     #question23(matches_2018_graph)
