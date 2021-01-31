@@ -1081,22 +1081,25 @@ def is_small_world(graph: nx.Graph):
     return s(graph) > 1
 
 
-def question19(player_network: nx.Graph):
+def question19(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     check()
 
-    with open(results_path("q12.csv"), 'w', newline='') as csvFile:
+    with open(results_path("q19.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
         row = ["Network", "Is small world?"]
         writer.writerow(row)
 
-        row = ["Player18", is_small_world(player_network)]
+        row = ["Player18", is_small_world(player_network_2018)]
         writer.writerow(row)
 
-        row = ["Player19", is_small_world(player_network)]
+        row = ["Player19", is_small_world(player_network_2019)]
         writer.writerow(row)
 
-        row = ["Player20", is_small_world(player_network)]
+        row = ["Player20", is_small_world(player_network_2020)]
+        writer.writerow(row)
+
+        row = ["Player aggregated", is_small_world(player_network_aggregated)]
         writer.writerow(row)
 
     csvFile.close()
@@ -1318,7 +1321,8 @@ def main():
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question20(matches_2018_graph)
     #question22(matches_2018_graph)
     #question23(matches_2018_graph)
