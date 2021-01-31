@@ -847,15 +847,15 @@ def question13(player_network: nx.Graph, top: int = 10):
     csvFile.close()
 
 
-def question14(player_network: nx.Graph):
+def question14(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     check()
 
     with open(results_path("q14.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
-        row = ["Player18 density", "Player19 Density", "Player20 density"]
+        row = ["Player18 density", "Player19 Density", "Player20 density", "PlayerAggregated density"]
         writer.writerow(row)
-        row = [nx.density(player_network),nx.density(player_network),nx.density(player_network)]
+        row = [nx.density(player_network_2018),nx.density(player_network_2019),nx.density(player_network_2020), nx.density(player_network_aggregated)]
         writer.writerow(row)
 
     csvFile.close()
@@ -869,99 +869,38 @@ def my_avg(lst: dict):
     return my_sum(lst)/len(lst)
 
 
-def question15(player_network: nx.Graph):
+def question15(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     check()
 
     with open(results_path("q15.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
-        row = ["", "Player18", "Player19", "Player20"]
+        row = ["", "Player18", "Player19", "Player20", "Player Aggregated"]
         writer.writerow(row)
 
-        n1 = my_avg(nx.closeness_centrality(player_network))
-        n2 = my_avg(nx.closeness_centrality(player_network))
-        n3 = my_avg(nx.closeness_centrality(player_network))
+        n1 = my_avg(nx.closeness_centrality(player_network_2018))
+        n2 = my_avg(nx.closeness_centrality(player_network_2019))
+        n3 = my_avg(nx.closeness_centrality(player_network_2020))
+        n4 = my_avg(nx.closeness_centrality(player_network_aggregated))
 
-        row = ["Closeness centrality", n1, n2, n3]
+        row = ["Closeness centrality", n1, n2, n3, n4]
         writer.writerow(row)
 
-        n1 = my_avg(nx.betweenness_centrality(player_network))
-        n2 = my_avg(nx.betweenness_centrality(player_network))
-        n3 = my_avg(nx.betweenness_centrality(player_network))
+        n1 = my_avg(nx.betweenness_centrality(player_network_2018))
+        n2 = my_avg(nx.betweenness_centrality(player_network_2019))
+        n3 = my_avg(nx.betweenness_centrality(player_network_2020))
+        n4 = my_avg(nx.closeness_centrality(player_network_aggregated))
 
-        row = ["Betweenness centrality", n1, n2, n3]
+        row = ["Betweenness centrality", n1, n2, n3, n4]
         writer.writerow(row)
 
-        n1 = my_avg(nx.degree_centrality(player_network))
-        n2 = my_avg(nx.degree_centrality(player_network))
-        n3 = my_avg(nx.degree_centrality(player_network))
+        n1 = my_avg(nx.degree_centrality(player_network_2018))
+        n2 = my_avg(nx.degree_centrality(player_network_2019))
+        n3 = my_avg(nx.degree_centrality(player_network_2020))
+        n4 = my_avg(nx.closeness_centrality(player_network_aggregated))
 
-        row = ["Normalized degree centrality", n1, n2, n3]
+        row = ["Degree centrality", n1, n2, n3, n4]
         writer.writerow(row)
-
-        # n1 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-        # n2 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-        # n3 = my_avg(nx.eigenvector_centrality_numpy(player_network))
-        #
-        # row = ["Eigenvector centrality", n1, n2, n3]
-        # writer.writerow(row)
-        #
-        # n1 = my_avg(nx.katz_centrality_numpy(player_network))
-        # n2 = my_avg(nx.katz_centrality_numpy(player_network))
-        # n3 = my_avg(nx.katz_centrality_numpy(player_network))
-        #
-        # row = ["Katz centrality", n1, n2, n3]
-        # writer.writerow(row)
-
-        n1 = my_avg(nx.edge_betweenness_centrality(player_network))
-        n2 = my_avg(nx.edge_betweenness_centrality(player_network))
-        n3 = my_avg(nx.edge_betweenness_centrality(player_network))
-
-        row = ["Edge betweenness centrality", n1, n2, n3]
-        writer.writerow(row)
-
-        # Error
-        '''
-        print(nx.percolation_centrality(actor_network))
-        n1 = my_avg(nx.percolation_centrality(actor_network))
-        n2 = my_avg(nx.percolation_centrality(genre_network))
-        n3 = my_avg(nx.percolation_centrality(movie_network))
-        
-        row = ["Percolation centrality", n1, n2, n3]
-        writer.writerow(row)
-        '''
-
-        n1 = my_avg(nx.pagerank(player_network))
-        n2 = my_avg(nx.pagerank(player_network))
-        n3 = my_avg(nx.pagerank(player_network))
-
-        row = ["PageRank centrality", n1, n2, n3]
-        writer.writerow(row)
-
-        n1 = nx.global_reaching_centrality(player_network)
-        n2 = nx.global_reaching_centrality(player_network)
-        n3 = nx.global_reaching_centrality(player_network)
-
-        row = ["Global reaching centrality", n1, n2, n3]
-        writer.writerow(row)
-
-        row = []
-        writer.writerow(row)
-
-        n1 = nx.node_connectivity(player_network)
-        n2 = nx.node_connectivity(player_network)
-        n3 = nx.node_connectivity(player_network)
-
-        row = ["Node connectivity", n1, n2, n3]
-        writer.writerow(row)
-
-        n1 = nx.edge_connectivity(player_network)
-        n2 = nx.edge_connectivity(player_network)
-        n3 = nx.edge_connectivity(player_network)
-
-        row = ["Edge connectivity", n1, n2, n3]
-        writer.writerow(row)
-
     csvFile.close()
 
 
@@ -978,54 +917,64 @@ def my_average_shortest_path(graph: nx.Graph):
     return length/cnt
 
 
-def question16(player_network: nx.Graph):
+def question16(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
     check()
 
     with open(results_path("q16.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
 
-        row = ["Player18 average distance", "Player19 average distance", "Player20 average distance"]
+        row = ["Player18 average distance", "Player19 average distance", "Player20 average distance", "Player Aggregated average distance"]
         writer.writerow(row)
 
         try:
-            n1 = my_average_shortest_path(player_network)
+            n1 = my_average_shortest_path(player_network_2018)
         except nx.exception.NetworkXError:
             n1 = 'graph is not connected'
 
         try:
-            n2 = my_average_shortest_path(player_network)
+            n2 = my_average_shortest_path(player_network_2019)
         except nx.exception.NetworkXError:
             n2 = 'graph is not connected'
 
         try:
-            n3 = my_average_shortest_path(player_network)
+            n3 = my_average_shortest_path(player_network_2020)
         except nx.exception.NetworkXError:
             n3 = 'graph is not connected'
 
-        row = [n1,n2,n3]
+        try:
+            n4 = my_average_shortest_path(player_network_2020)
+        except nx.exception.NetworkXError:
+            n4 = 'graph is not connected'
+
+        row = [n1,n2,n3, n4]
         writer.writerow(row)
 
         row = ["","",""]
         writer.writerow(row)
 
-        row = ["Player18 diameter", "Player19 diameter", "Player20 diameter"]
+        row = ["Player18 diameter", "Player19 diameter", "Player20 diameter", "Player Aggregated diameter"]
         writer.writerow(row)
         try:
-            n1 = nx.diameter(player_network)
+            n1 = nx.diameter(player_network_2018)
         except nx.exception.NetworkXError:
             n1 = 'graph is not connected'
 
         try:
-            n2 = nx.diameter(player_network)
+            n2 = nx.diameter(player_network_2019)
         except nx.exception.NetworkXError:
             n2 = 'graph is not connected'
 
         try:
-            n3 = nx.diameter(player_network)
+            n3 = nx.diameter(player_network_2020)
         except nx.exception.NetworkXError:
             n3 = 'graph is not connected'
 
-        row = [n1,n2,n3]
+        try:
+            n4 = nx.diameter(player_network_aggregated)
+        except nx.exception.NetworkXError:
+            n4 = 'graph is not connected'
+
+        row = [n1,n2,n3,n4]
         writer.writerow(row)
 
     csvFile.close()
@@ -1340,11 +1289,11 @@ def main():
 
     #question10(matches_2018_graph)
     #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question13(matches_2018_graph)
-    #question14(matches_2018_graph)
-    #question15(matches_2018_graph)
-    #question16(matches_2018_graph)
+    #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question17(matches_2018_graph)
     #question20(matches_2018_graph)
     #question22(matches_2018_graph)
