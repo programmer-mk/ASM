@@ -560,23 +560,55 @@ def get_atp_rank(player_id):
     return atp_rang
 
 
-def question5(players: nx.Graph, top: int = 10):
-    lst1 = sort_nodes_by_degree(players)[0:top]
-    lst2 = sort_nodes_by_weighed_degree(players)[0:top]
+def question5(players_2018: nx.Graph, players_2019: nx.Graph,players_2020: nx.Graph, players_aggregated: nx.Graph, top = 10):
+    lst1_2018 = sort_nodes_by_degree(players_2018)[0:top]
+    lst2_2018 = sort_nodes_by_weighed_degree(players_2018)[0:top]
+
+    lst1_2019 = sort_nodes_by_degree(players_2019)[0:top]
+    lst2_2019 = sort_nodes_by_weighed_degree(players_2019)[0:top]
+
+    lst1_2020 = sort_nodes_by_degree(players_2020)[0:top]
+    lst2_2020 = sort_nodes_by_weighed_degree(players_2020)[0:top]
+
+    lst1_aggregated = sort_nodes_by_degree(players_aggregated)[0:top]
+    lst2_aggregated = sort_nodes_by_weighed_degree(players_aggregated)[0:top]
 
     with open(results_path("q5.csv"), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
         writer.writerow(["Rank", "Top players", "Degree", "Atp Rank", "Top players", "Weighed degree", "Atp Rank"])
 
         for rank in range(0, top):
-            writer.writerow([rank+1, lst1[rank][0], lst1[rank][1], get_atp_rank(lst1[rank][0]), lst2[rank][0], lst2[rank][1], get_atp_rank(lst2[rank][0])])
+            writer.writerow([rank+1, lst1_2018[rank][0], lst1_2018[rank][1], get_atp_rank(lst1_2018[rank][0]), lst2_2018[rank][0],
+                             lst2_2018[rank][1], get_atp_rank(lst2_2018[rank][0])])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            writer.writerow([rank+1, lst1_2019[rank][0], lst1_2019[rank][1], get_atp_rank(lst1_2019[rank][0]), lst2_2019[rank][0],
+                             lst2_2019[rank][1], get_atp_rank(lst2_2019[rank][0])])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            writer.writerow([rank+1, lst1_2020[rank][0], lst1_2020[rank][1], get_atp_rank(lst1_2020[rank][0]), lst2_2020[rank][0],
+                             lst2_2020[rank][1], get_atp_rank(lst2_2020[rank][0])])
+
+        writer.writerow([])
+        for rank in range(0, top):
+            writer.writerow([rank+1, lst1_aggregated[rank][0], lst1_aggregated[rank][1], get_atp_rank(lst1_aggregated[rank][0]),
+                             lst2_aggregated[rank][0], lst2_aggregated[rank][1], get_atp_rank(lst2_aggregated[rank][0])])
     csvFile.close()
 
 
-def compute_count_players_by_country():
-    full_winning_player_data = pd.merge(atp_players, atp_matches_2018,left_on='player_id',right_on='winner_id').drop_duplicates(['player_id'])
+def compute_count_players_by_country(year):
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020,
+        'aggregated': pd.concat([atp_matches_2018, atp_matches_2019, atp_matches_2020])
+    }
+
+    full_winning_player_data = pd.merge(atp_players, matches.get(year),left_on='player_id',right_on='winner_id').drop_duplicates(['player_id'])
     full_winning_player_ids = full_winning_player_data['player_id']
-    full_loser_player_data = pd.merge(atp_players,atp_matches_2018,left_on='player_id',right_on='loser_id').drop_duplicates(['player_id'])
+    full_loser_player_data = pd.merge(atp_players,matches.get(year),left_on='player_id',right_on='loser_id').drop_duplicates(['player_id'])
     full_loser_player_ids = full_loser_player_data['player_id']
     all_player_ids = pd.concat([full_winning_player_ids, full_loser_player_ids], axis=0)
     distinct_players = all_player_ids.drop_duplicates(keep='first').to_frame()
@@ -585,8 +617,14 @@ def compute_count_players_by_country():
 
 
 def question6():
-    country_count = compute_count_players_by_country()
-    print(country_count.head(10))
+    country_count_2018 = compute_count_players_by_country('2018')
+    country_count_2019 = compute_count_players_by_country('2019')
+    country_count_2020 = compute_count_players_by_country('2020')
+    country_count_aggregated = compute_count_players_by_country('aggregated')
+    print(country_count_2018.head(5))
+    print(country_count_2019.head(5))
+    print(country_count_2020.head(5))
+    print(country_count_aggregated.head(5))
 
 
 # this method retrieves countries of best atp players on current date(last date in dataset)
@@ -1274,10 +1312,10 @@ def main():
     # make this generic, do compute for all graphs
     #question1(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question3()
+    #question3()
 
-    #question5(matches_2018_graph)
-    #question6()
+    #question5(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question6()
     #question7()
     #question9(matches_2018_graph)
 
