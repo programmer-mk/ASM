@@ -999,17 +999,24 @@ def compute_correlation_rank_and_degree(player_network):
     return x
 
 
-def question17(player_network: nx.Graph):
+def node_degrees_distribution(player_network, year):
     check()
 
-    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q17.pdf"))
+    pdf = matplotlib.backends.backend_pdf.PdfPages(results_path(f"q17-{year}.pdf"))
     fig = pl.figure()
-    pl.title('Player network - distribution of node degrees')
+    pl.title(f'Player network - distribution of node degrees, year: {year}')
     pl.hist([val for (node, val) in player_network.degree()], bins=50)
     pdf.savefig(fig, dpi=900)
     pdf.close()
 
     print(compute_correlation_rank_and_degree(player_network))
+
+
+def question17(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
+    node_degrees_distribution(player_network_2018, '2018')
+    node_degrees_distribution(player_network_2019, '2019')
+    node_degrees_distribution(player_network_2020, '2020')
+    node_degrees_distribution(player_network_aggregated, 'aggregated')
 
 
 def question18(player_network: nx.Graph):
@@ -1294,7 +1301,7 @@ def main():
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    #question17(matches_2018_graph)
+    question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question20(matches_2018_graph)
     #question22(matches_2018_graph)
     #question23(matches_2018_graph)
