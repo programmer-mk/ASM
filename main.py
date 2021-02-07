@@ -119,6 +119,22 @@ def sored_nodes_on_betweenness_centrality(graph: nx.Graph):
     return ret
 
 
+def get_player_name(player_id):
+    first_name = atp_players[atp_players['player_id'] == int(player_id)]['first_name'].head(1).values[0]
+    last_name = atp_players[atp_players['player_id'] == int(player_id)]['last_name'].head(1).values[0]
+    return first_name + ' '+ last_name
+
+
+def sored_nodes_on_closeness_centrality(graph: nx.Graph):
+    ret = []
+    cc = nx.closeness_centrality(graph)
+    for node in graph.nodes():
+        ret.append([node,  cc[node]])
+
+    ret.sort(key=lambda x: x[1], reverse=True)
+    return ret
+
+
 def sorted_nodes_on_degree_centrality(graph: nx.Graph):
     ret = list()
     dc = nx.degree_centrality(graph)
@@ -129,7 +145,7 @@ def sorted_nodes_on_degree_centrality(graph: nx.Graph):
     return ret
 
 
-def sorted_nodes_on_bc_dc(bc: list, dc: list):
+def sorted_nodes_on_two_centralities(bc: list, dc: list):
     ret = list()
     for item1 in bc:
         for item2 in dc:
@@ -549,8 +565,30 @@ def question3():
     create_output_question3(results_2018, results_2019, results_2020, 10)
 
 
-def question4():
-    print('Look into results of question 2')
+
+def question4_year_output(network, year, top):
+
+    with open(results_path(f'q4-{year}.csv'), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+
+        row = ["", "Player", "Top DC", "Player", "Top CC", "Player", "Top DC*CC"]
+        writer.writerow(row)
+
+        cc = sored_nodes_on_closeness_centrality(network)
+        dc = sorted_nodes_on_degree_centrality(network)
+        dc_cc = sorted_nodes_on_two_centralities(dc, cc)
+
+        for i in range(0,top):
+            row = [i,get_player_name(dc[i][0]), dc[i][1],get_player_name(cc[i][0]), cc[i][1],get_player_name(dc_cc[i][0]), dc_cc[i][1]]
+            writer.writerow(row)
+    csvFile.close()
+
+
+def question4(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph):
+    question4_year_output(matches_2018_graph, '2018', 10)
+    question4_year_output(matches_2019_graph, '2019', 10)
+    question4_year_output(matches_2020_graph, '2020', 10)
+    question4_year_output(matches_year_aggregated_graph, 'aggregated', 10)
 
 
 def get_atp_rank(player_id):
@@ -838,7 +876,7 @@ def question13(player_network: nx.Graph, top: int = 10):
 
         bc = sored_nodes_on_betweenness_centrality(player_network)
         dc = sorted_nodes_on_degree_centrality(player_network)
-        bc_dc = sorted_nodes_on_bc_dc(bc, dc)
+        bc_dc = sorted_nodes_on_two_centralities(bc, dc)
 
         for i in range(0,top):
             row = [i,bc[i][0], bc[i][1],dc[i][0], dc[i][1],bc_dc[i][0], bc_dc[i][1]]
@@ -1306,7 +1344,7 @@ def main():
     #question1(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question3()
-
+    #question4(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question5(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question6()
     #question7()
@@ -1321,7 +1359,7 @@ def main():
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question20(matches_2018_graph)
     #question22(matches_2018_graph)
     #question23(matches_2018_graph)
