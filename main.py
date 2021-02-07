@@ -1231,10 +1231,10 @@ def matches_and_players_distribution(player_network: nx.Graph, year):
     # here column shouldn't be called 'number_of_players', it should be 'player_id',
     # but bacause rename is not working we don't want 'player_id' on plot
     df = DataFrame(ret, columns=['number_of_players', 'game_played'])
+    pl.figure(figsize=(10, 10))  # Don't create a humongous figure
     df.groupby('game_played')['number_of_players'].count().to_frame().plot(kind='bar', color='r',
       figsize=(20,10), title=f'Distribution of games played by player numbers - {year}')
-
-    #pdf = matplotlib.backends.backend_pdf.PdfPages(results_path("q24.pdf"))
+    pl.savefig(f"results/q24_{year}.pdf", format='pdf', dpi=900)
 
     #pl.title('Player network - distribution of node degrees')
     #pl.plot(games_played(0), games_played(1), 'ro')
@@ -1281,10 +1281,11 @@ def matches_per_year_distribution(year):
     return matches.get(year).shape
 
 
-def question24(player_network: nx.Graph):
-    matches_and_players_distribution(player_network, '2018')
-    matches_and_players_distribution(player_network, '2019')
-    matches_and_players_distribution(player_network, '2020')
+def question24(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
+    matches_and_players_distribution(player_network_2018, '2018')
+    matches_and_players_distribution(player_network_2019, '2019')
+    matches_and_players_distribution(player_network_2020, '2020')
+    matches_and_players_distribution(player_network_aggregated, 'aggregated')
 
 
 def question25():
@@ -1360,10 +1361,10 @@ def main():
     #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    #question20(matches_2018_graph)
-    #question22(matches_2018_graph)
-    #question23(matches_2018_graph)
-    #question24(matches_2018_graph)
+    #question20(matches_year_aggregated_graph)
+    #question22(matches_year_aggregated_graph)
+    #question23(matches_year_aggregated_graph)
+    question24(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question25()
     #question26()
 
