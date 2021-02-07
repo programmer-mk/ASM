@@ -1248,13 +1248,15 @@ def tournaments_and_surface_distribution(year):
     # put here 2019 and 2020
     matches = {
         '2018': atp_matches_2018,
-        '2019': atp_matches_2018,
-        '2020': atp_matches_2018
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020
     }
     distinct_tournaments = matches.get(year).drop_duplicates( subset='tourney_id', keep='first', inplace=False)
     df = pd.DataFrame(distinct_tournaments.groupby('surface')['tourney_id'].count())
     df.columns = ['number_of_tournaments']
+    pl.figure(figsize=(10, 10))  # Don't create a humongous figure
     df.plot(kind='bar', color='r', figsize=(20,10), title=f'Distribution of tournaments by surface - {year}')
+    pl.savefig(f"results/q25_{year}.pdf", format='pdf', dpi=900)
     print(df)
 
 
@@ -1275,8 +1277,8 @@ def matches_per_year_distribution(year):
     # put here 2019 and 2020
     matches = {
         '2018': atp_matches_2018,
-        '2019': atp_matches_2018,
-        '2020': atp_matches_2018
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020
     }
     return matches.get(year).shape
 
@@ -1305,13 +1307,15 @@ def matches_number_and_surface_distribution(year):
     # put here 2019 and 2020
     matches = {
         '2018': atp_matches_2018,
-        '2019': atp_matches_2018,
-        '2020': atp_matches_2018
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020
     }
     distinct_matches = matches.get(year)
     df = pd.DataFrame(distinct_matches['surface'].value_counts())
     df.columns = ['number_of_games']
+    pl.figure(figsize=(10, 10))  # Don't create a humongous figure
     df.plot(kind='bar', color='r', figsize=(20,10), title=f'Distribution of matches number by surface - {year}', )
+    pl.savefig(f"results/q26_{year}.pdf", format='pdf', dpi=900)
     print(df)
 
 
@@ -1364,9 +1368,9 @@ def main():
     #question20(matches_year_aggregated_graph)
     #question22(matches_year_aggregated_graph)
     #question23(matches_year_aggregated_graph)
-    question24(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question24(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question25()
-    #question26()
+    question26()
 
 
 if __name__ == "__main__":
