@@ -762,7 +762,7 @@ def question9(player_network_2018: nx.Graph, player_network_2019: nx.Graph, play
     question_9_output(answer_aggregated, player_network_aggregated, 'aggregated')
 
 
-def clustering_analyse(player_network: nx.Graph):
+def clustering_analyse(player_network: nx.Graph, year):
     player_id, clustering_coef = zip(*nx.clustering(player_network, weight = "weight").items())
     non_zero = [(id_ig, cc)  for id_ig, cc in zip(player_id, clustering_coef) if cc > 0]
 
@@ -776,19 +776,33 @@ def clustering_analyse(player_network: nx.Graph):
     communities = generate_communities(player_network)
     modularity_undirected = qual.modularity(player_network, communities)
 
-    print(f"Max local cc: {max_local_clustering_degree}")
-    print(f"Average cc: {average_clustering_degree}")
-    print(f"Global cc: {global_clustering_coef}")
-    print(f"clusters modularity: {modularity_undirected}")
-    print("Local non-zero cc:")
-    print(df)
+    with open(results_path(f"q10-{year}.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Max local cc", "Average cc", "Global cc", "clusters modularity"])
+        writer.writerow([max_local_clustering_degree, average_clustering_degree, global_clustering_coef, modularity_undirected])
+    csvFile.close()
 
 
-def question10(player_network: nx.Graph):
-    clustering_analyse(player_network)
-    print(nx.attribute_assortativity_coefficient(player_network, "rank"))
-    print(nx.attribute_assortativity_coefficient(player_network, "country"))
-    print(nx.degree_assortativity_coefficient(player_network))
+def compute_network_assortativity(player_network, year):
+    with open(results_path(f"q10-assortativity-{year}.csv"), 'w', newline='') as csvFile:
+        writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["rank assortativity", "country assortativity", "degree assortativity"])
+        writer.writerow([nx.attribute_assortativity_coefficient(player_network, "rank"),
+                         nx.attribute_assortativity_coefficient(player_network, "country"), nx.degree_assortativity_coefficient(player_network)])
+
+    csvFile.close()
+
+
+def question10(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
+    clustering_analyse(player_network_2018, '2018')
+    clustering_analyse(player_network_2019, '2019')
+    clustering_analyse(player_network_2020, '2020')
+    clustering_analyse(player_network_aggregated, 'aggregated')
+
+    compute_network_assortativity(player_network_2018, '2018')
+    compute_network_assortativity(player_network_2019, '2019')
+    compute_network_assortativity(player_network_2020, '2020')
+    compute_network_assortativity(player_network_aggregated, 'aggregated')
 
 
 def compare_weighted_and_regular_graph(player_network: nx.Graph):
@@ -1355,7 +1369,7 @@ def main():
     #question7()
     #question9(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
-    #question10(matches_2018_graph)
+    question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question13(matches_2018_graph)
@@ -1370,7 +1384,7 @@ def main():
     #question23(matches_year_aggregated_graph)
     #question24(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question25()
-    question26()
+    #question26()
 
 
 if __name__ == "__main__":
