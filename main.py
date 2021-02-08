@@ -5,7 +5,6 @@ import os.path as path
 import csv
 import matplotlib
 import networkx as nx
-from networkx.algorithms import community
 import collections
 import matplotlib.pyplot as pl
 from matplotlib import colors as mcolors
@@ -22,6 +21,8 @@ import scipy.stats as stats
 import operator
 from operator import itemgetter
 from pandas import DataFrame
+from networkx.algorithms import community
+from sklearn.cluster import KMeans
 
 DATA_DIR = 'data'
 RESULTS_DIR = 'results'
@@ -1229,14 +1230,23 @@ def question22(player_network: nx.Graph):
 
 
 def question23(player_network: nx.Graph):
-    djokovic_ego_network = nx.ego_graph(player_network, '104925')
-    nadal_ego_network = nx.ego_graph(player_network, '104745')
-    federer_ego_network = nx.ego_graph(player_network, '103819')
+    djokovic_ego_network: nx.Graph = nx.ego_graph(player_network, '104925')
+    nadal_ego_network: nx.Graph = nx.ego_graph(player_network, '104745')
+    federer_ego_network: nx.Graph = nx.ego_graph(player_network, '103819')
 
     combined1_network = nx.compose(djokovic_ego_network,nadal_ego_network)
-    full_combined = nx.compose(combined1_network, federer_ego_network)
-    print(full_combined)
+    full_combined :nx.Graph = nx.compose(combined1_network, federer_ego_network)
+    print(full_combined.number_of_nodes())
+    print(player_network.number_of_nodes())
     # do clustering of this network to 3 clusters
+    matrix = nx.to_numpy_matrix(full_combined)
+    labeler = KMeans(n_clusters=3)
+    result = labeler.fit(matrix).labels_
+    print(result)
+    print('')
+    print(full_combined.nodes)
+    print('')
+    print(djokovic_ego_network.nodes)
 
 
 def matches_and_players_distribution(player_network: nx.Graph, year):
@@ -1369,7 +1379,7 @@ def main():
     #question7()
     #question9(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
-    question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question13(matches_2018_graph)
