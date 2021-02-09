@@ -674,6 +674,61 @@ def question7():
     print(countries)
 
 
+def tournaments_played(player_id, year):
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020
+    }
+    #distinct_tournaments = matches.get(year).drop_duplicates( subset='tourney_id', keep='first', inplace=False)
+    tournaments1 = matches.get(year)[matches.get(year)['winner_id'] == player_id]['tourney_id'].values.tolist()
+    tournaments2 = matches.get(year)[matches.get(year)['loser_id'] == player_id]['tourney_id'].values.tolist()
+    return len(set(tournaments1 + tournaments2))
+
+def games_played(player_id, year):
+    matches = {
+        '2018': atp_matches_2018,
+        '2019': atp_matches_2019,
+        '2020': atp_matches_2020
+    }
+    winner_games = matches.get(year)[matches.get(year)['winner_id'] == player_id]
+    losser_games = matches.get(year)[matches.get(year)['loser_id'] == player_id]
+    return winner_games.shape[0] , losser_games.shape[0]
+
+
+def question8():
+    serbian_players = atp_players[atp_players['country_code'] == 'SRB']['player_id'].values.tolist()
+    print(f'there are {len(serbian_players)} serbian players in last 20 years on ATP')
+
+    active_players = []
+    for player in serbian_players:
+        wins_2018, loses_2018 = games_played(player,'2018')
+        wins_2019, loses_2019 = games_played(player,'2019')
+        wins_2020, loses_2020 = games_played(player,'2020')
+        if wins_2018 > 0 or loses_2018 > 0 or wins_2019 > 0 or loses_2019 > 0 or wins_2020 > 0 or loses_2020 > 0:
+            active_players.append(player)
+            print(f'Player: {get_player_name(player)} had {wins_2018} wins in 2018 and {loses_2018} loses  in 2018')
+            print(f'Player: {get_player_name(player)} had {wins_2019} wins in 2019 and {loses_2019} loses  in 2019')
+            print(f'Player: {get_player_name(player)} had {wins_2020} wins in 2020 and {loses_2020} loses  in 2020')
+            print(f'Player: {get_player_name(player)} played on {tournaments_played(player,"2018")} tournaments in 2018')
+            print(f'Player: {get_player_name(player)} played on {tournaments_played(player,"2019")} tournaments in 2019')
+            print(f'Player: {get_player_name(player)} played on {tournaments_played(player,"2020")} tournaments in 2020')
+
+
+            if current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].empty:
+                # not active players on last noticed date(don't have rank)
+                rank = -10
+                print(f'Player: {get_player_name(player)} current rank is {rank}')
+            else:
+                rank = current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
+                print(f'Player: {get_player_name(player)} current rank is {rank}')
+
+
+    print(f'Number of active players from Serbia is : {len(active_players)}')
+
+
+
+
 def generate_communities(actor_network: nx.Graph):
     communities_generator = community.girvan_newman(actor_network)
     top_level_communities = next(communities_generator)
@@ -1377,6 +1432,7 @@ def main():
     #question5(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question6()
     #question7()
+    question8()
     #question9(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
     #question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
