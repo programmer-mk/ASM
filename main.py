@@ -959,24 +959,54 @@ def question12(player_network_2018: nx.Graph, player_network_2019: nx.Graph, pla
     found_center_of_network(player_network_aggregated, 'aggregated')
 
 
-def question13(player_network: nx.Graph, top: int = 10):
+def found_bridges(player_network, year, top):
     check()
+    # we should use next two dictionaries to get bridges in all 4 networks
+    # results cannot be used from top values of betweenes centrality, because most of those
+    # values have big degree centrality, but bridges in network are on periphery and they are having
+    # small number of connections. I assumed that max number of connections for bridge is 4.
 
-    with open(results_path("q13.csv"), 'w', newline='') as csvFile:
+    target_degree_centrality = {
+        '2018': 0.01,
+        '2019': 0.011,
+        '2020': 0.0117,
+        'aggregated': 0.0069
+    }
+
+    target_betweenes_centrality = {
+        '2018': 0.0082,
+        '2019': 0.0082,
+        '2020': 0.0082,
+        'aggregated': 0.0082
+    }
+
+    with open(results_path(f'q13-{year}.csv'), 'w', newline='') as csvFile:
         writer = csv.writer(csvFile, quoting=csv.QUOTE_MINIMAL)
-
-        row = ["", "Player", "Top BC", "Player", "Top DC", "Player", "Top DC*BC"]
+        row = ["", "Player", "Top BC", " DC"]
         writer.writerow(row)
 
-        bc = sorted_nodes_on_betweenness_centrality(player_network)
-        dc = sorted_nodes_on_degree_centrality(player_network)
-        bc_dc = sorted_nodes_on_two_centralities(bc, dc)
+        bc = nx.betweenness_centrality(player_network)
+        dc = nx.degree_centrality(player_network)
+        dc_sorted = sorted_nodes_on_degree_centrality(player_network)
+        dc_sorted.sort(key=lambda x: x[1], reverse=False)
 
         for i in range(0,top):
-            row = [i,bc[i][0], bc[i][1],dc[i][0], dc[i][1],bc_dc[i][0], bc_dc[i][1]]
-            writer.writerow(row)
+            player_name = get_player_name(dc_sorted[i][0])
+            player_id = dc_sorted[i][0]
+            betweenes_centrality = bc[player_id]
+            degree_centrality = dc[player_id]
+            if degree_centrality < target_degree_centrality.get(year) and betweenes_centrality > target_betweenes_centrality.get(year):
+                row = [i,player_name, betweenes_centrality, degree_centrality]
+                writer.writerow(row)
 
     csvFile.close()
+
+
+def question13(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
+    found_bridges(player_network_2018, '2018', len(player_network_2018.nodes()))
+    found_bridges(player_network_2019, '2019', len(player_network_2019.nodes()))
+    found_bridges(player_network_2020, '2020', len(player_network_2020.nodes()))
+    found_bridges(player_network_aggregated, 'aggregated', len(player_network_aggregated.nodes()))
 
 
 def question14(player_network_2018: nx.Graph, player_network_2019: nx.Graph, player_network_2020: nx.Graph, player_network_aggregated: nx.Graph):
@@ -1458,13 +1488,13 @@ def main():
     #question5(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question6()
     #question7()
-    question8()
+    #question8()
     #question9(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
 
     #question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    #question13(matches_2018_graph)
+    question13(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
