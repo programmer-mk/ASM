@@ -92,25 +92,32 @@ def load_atp_players():
     print(atp_players.head())
 
 
+def filter_data_in_matches(df):
+    df.drop(df.columns.difference(['tourney_id', 'tourney_name', 'surface', 'tourney_date', 'winner_id', 'winner_name','loser_id', 'loser_name']), 1, inplace=True)
+
+
 def load_atp_matches_2018():
     global atp_matches_2018
     atp_matches_2018 = pd.read_csv(f'data/{ATP_MATCHES_2018_DATASET}')
+    filter_data_in_matches(atp_matches_2018)
     print(atp_matches_2018.head())
 
 
 def load_atp_matches_2019():
     global atp_matches_2019
     atp_matches_2019 = pd.read_csv(f'data/{ATP_MATCHES_2019_DATASET}')
+    filter_data_in_matches(atp_matches_2019)
     print(atp_matches_2019.head())
 
 
 def load_atp_matches_2020():
     global atp_matches_2020
     atp_matches_2020 = pd.read_csv(f'data/{ATP_MATCHES_2020_DATASET}')
+    filter_data_in_matches(atp_matches_2020)
     print(atp_matches_2020.head())
 
 
-def sored_nodes_on_betweenness_centrality(graph: nx.Graph):
+def sorted_nodes_on_betweenness_centrality(graph: nx.Graph):
     ret = []
     bc = nx.betweenness_centrality(graph)
     for node in graph.nodes():
@@ -126,7 +133,7 @@ def get_player_name(player_id):
     return first_name + ' '+ last_name
 
 
-def sored_nodes_on_closeness_centrality(graph: nx.Graph):
+def sorted_nodes_on_closeness_centrality(graph: nx.Graph):
     ret = []
     cc = nx.closeness_centrality(graph)
     for node in graph.nodes():
@@ -308,6 +315,23 @@ def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
     pl.savefig(file_name, format='pdf', dpi=900)
 
 
+def rank_category(rank):
+    top = 1
+    if rank < 21:
+        top = 20
+    elif rank < 101:
+        top = 100
+    elif rank < 301:
+        top = 300
+    elif rank < 501:
+        top = 500
+    elif rank < 1001:
+        top = 1000
+    else:
+        top = 10000
+    return top
+
+
 def add_players_to_graph(player_graph, player_dictionary):
     players = list(player_dictionary.keys())
     player_countries = list(atp_players[atp_players['player_id'] == int(player)]['country_code'].unique()[0] for player in players)
@@ -321,7 +345,7 @@ def add_players_to_graph(player_graph, player_dictionary):
             rank = -1
         else:
             rank = current_player_ranking[current_player_ranking['player_id'] == int(player)].sort_values('ranking_date', ascending=False)['rank'].head(1).values[0]
-        player_rankings.append(rank)
+        player_rankings.append(rank_category(rank))
     # TODO: group by country and give list of nodes to add_nodes_from
     for index in range(len(players)):
         s = players[index]
@@ -575,7 +599,7 @@ def question4_year_output(network, year, top):
         row = ["", "Player", "Top DC", "Player", "Top CC", "Player", "Top DC*CC"]
         writer.writerow(row)
 
-        cc = sored_nodes_on_closeness_centrality(network)
+        cc = sorted_nodes_on_closeness_centrality(network)
         dc = sorted_nodes_on_degree_centrality(network)
         dc_cc = sorted_nodes_on_two_centralities(dc, cc)
 
@@ -944,7 +968,7 @@ def question13(player_network: nx.Graph, top: int = 10):
         row = ["", "Player", "Top BC", "Player", "Top DC", "Player", "Top DC*BC"]
         writer.writerow(row)
 
-        bc = sored_nodes_on_betweenness_centrality(player_network)
+        bc = sorted_nodes_on_betweenness_centrality(player_network)
         dc = sorted_nodes_on_degree_centrality(player_network)
         bc_dc = sorted_nodes_on_two_centralities(bc, dc)
 
