@@ -302,14 +302,14 @@ def read_atp_matches_2020_dataset():
             players_2020_dictionary[loser_id] = [winner_id]
 
 
-def save_player_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
-    #pos = nx.spring_layout(actor_graph, iterations=5000, )
-    #pos = nx.random_layout(actor_graph)
-    number_of_nodes: int = len(actor_graph.nodes())
+def save_player_graph_as_pdf(player_graph: nx.Graph, color='r', file_name=""):
+    #pos = nx.spring_layout(player_graph, iterations=5000, )
+    #pos = nx.random_layout(player_graph)
+    number_of_nodes: int = len(player_graph.nodes())
     n: int = 4
-    pos = nx.spring_layout(actor_graph, k=(1/math.sqrt(number_of_nodes))*n)
+    pos = nx.spring_layout(player_graph, k=(1/math.sqrt(number_of_nodes))*n)
     pl.figure(figsize=(20, 20))  # Don't create a humongous figure
-    nx.draw_networkx(actor_graph, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=color)
+    nx.draw_networkx(player_graph, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=color)
     pl.axis('off')
     pl.show()
     pl.savefig(f'results/{file_name}', format='pdf', dpi=900)
@@ -753,12 +753,17 @@ def question8():
 
 
 
-def generate_communities(actor_network: nx.Graph):
-    communities_generator = community.girvan_newman(actor_network)
+def generate_communities(player_network: nx.Graph):
+    communities_generator = community.girvan_newman(player_network)
     top_level_communities = next(communities_generator)
     next_level_communities = next(communities_generator)
     answer = sorted(map(sorted, next_level_communities))
     return answer
+
+
+def get_network_core(player_network: nx.Graph):
+    core = player_network.subgraph(generate_communities(player_network)[0])
+    return core
 
 
 def random_color():
@@ -800,7 +805,6 @@ def question_9_output(answer, player_network, year):
                 break
         colors.append(community_colors[index])
 
-    #save_actor_graph_as_pdf(actor_network, color=colors, fileName="q4.pdf")
 
     pdf = matplotlib.backends.backend_pdf.PdfPages(results_path(f"q9-{year}.pdf"))
     number_of_nodes: int = len(player_network.nodes())
@@ -944,8 +948,8 @@ def found_center_of_network(player_network: nx.Graph, year, top: int=10):
         writer.writerows(answer)
 
         '''
-        for item in generate_communities(actor_network)[0]:
-            if actor_network.degree(item) > degree_treshold:
+        for item in generate_communities(player_network)[0]:
+            if player_network.degree(item) > degree_treshold:
                 row = [item]
                 writer.writerow(row)
         '''
@@ -1099,22 +1103,26 @@ def question16(player_network_2018: nx.Graph, player_network_2019: nx.Graph, pla
         try:
             n1 = my_average_shortest_path(player_network_2018)
         except nx.exception.NetworkXError:
-            n1 = 'graph is not connected'
+            print('graph is not connected')
+            n1 = my_average_shortest_path(get_network_core(player_network_2018))
 
         try:
             n2 = my_average_shortest_path(player_network_2019)
         except nx.exception.NetworkXError:
-            n2 = 'graph is not connected'
+            print('graph is not connected')
+            n2 = my_average_shortest_path(get_network_core(player_network_2019))
 
         try:
             n3 = my_average_shortest_path(player_network_2020)
         except nx.exception.NetworkXError:
-            n3 = 'graph is not connected'
+            print('graph is not connected')
+            n3 = my_average_shortest_path(get_network_core(player_network_2020))
 
         try:
-            n4 = my_average_shortest_path(player_network_2020)
+            n4 = my_average_shortest_path(player_network_aggregated)
         except nx.exception.NetworkXError:
-            n4 = 'graph is not connected'
+            print('graph is not connected')
+            n4 = my_average_shortest_path(get_network_core(player_network_aggregated))
 
         row = [n1,n2,n3, n4]
         writer.writerow(row)
@@ -1127,22 +1135,27 @@ def question16(player_network_2018: nx.Graph, player_network_2019: nx.Graph, pla
         try:
             n1 = nx.diameter(player_network_2018)
         except nx.exception.NetworkXError:
-            n1 = 'graph is not connected'
+            print('graph is not connected')
+            test = get_network_core(player_network_2018)
+            n1 = nx.diameter(get_network_core(player_network_2018))
 
         try:
             n2 = nx.diameter(player_network_2019)
         except nx.exception.NetworkXError:
-            n2 = 'graph is not connected'
+            print('graph is not connected')
+            n2 = nx.diameter(get_network_core(player_network_2019))
 
         try:
             n3 = nx.diameter(player_network_2020)
         except nx.exception.NetworkXError:
-            n3 = 'graph is not connected'
+            print('graph is not connected')
+            n3 = nx.diameter(get_network_core(player_network_2020))
 
         try:
             n4 = nx.diameter(player_network_aggregated)
         except nx.exception.NetworkXError:
-            n4 = 'graph is not connected'
+            print('graph is not connected')
+            n4 = nx.diameter(get_network_core(player_network_aggregated))
 
         row = [n1,n2,n3,n4]
         writer.writerow(row)
@@ -1505,7 +1518,7 @@ def main():
     #question13(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
