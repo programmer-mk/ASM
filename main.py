@@ -766,6 +766,17 @@ def get_network_core(player_network: nx.Graph):
     return core
 
 
+def get_color(color_index):
+    #dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+    colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+
+    # Sort colors by hue, saturation, value and name.
+    by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
+                    for name, color in colors.items())
+    cls = [name for hsv, name in by_hsv]
+    return cls[color_index * 10]
+
+
 def random_color():
     #dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
@@ -1254,6 +1265,7 @@ def lam(graph: nx.Graph, rand: nx.Graph):
 def s(graph: nx.Graph):
     n = graph.number_of_nodes()
     m = graph.number_of_edges()
+    # probability
     p = 2*m/(n*(n-1))
     rand = nx.erdos_renyi_graph(n,p)
 
@@ -1359,6 +1371,22 @@ def question22(player_network: nx.Graph):
     draw_ego_network_position_in_full_network(player_network, 'Roger Federer')
 
 
+def draw_clustered_network(player_network, labels):
+    colors = list()
+    community_colors = list()
+
+    for index in range(0, len(player_network.nodes())):
+        colors.append(get_color(labels[index]))
+
+    number_of_nodes: int = len(player_network.nodes())
+    n: int = 4
+    pos = nx.spring_layout(player_network, k=(1 / math.sqrt(number_of_nodes)) * n)
+    pl.figure(figsize=(20, 20))  # Don't create a humongous figure
+    nx.draw_networkx(player_network, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=colors)
+    pl.axis('off')
+    pl.savefig(f"results/q23.pdf", format='pdf', dpi=900)
+
+
 def question23(player_network: nx.Graph):
     djokovic_ego_network: nx.Graph = nx.ego_graph(player_network, '104925')
     nadal_ego_network: nx.Graph = nx.ego_graph(player_network, '104745')
@@ -1373,10 +1401,7 @@ def question23(player_network: nx.Graph):
     labeler = KMeans(n_clusters=3)
     result = labeler.fit(matrix).labels_
     print(result)
-    print('')
-    print(full_combined.nodes)
-    print('')
-    print(djokovic_ego_network.nodes)
+    draw_clustered_network(full_combined, result)
 
 
 def matches_and_players_distribution(player_network: nx.Graph, year):
@@ -1518,13 +1543,13 @@ def main():
     #question13(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question17(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question18(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question19(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question20(matches_year_aggregated_graph)
     #question22(matches_year_aggregated_graph)
-    #question23(matches_year_aggregated_graph)
+    question23(matches_2018_graph)
     #question24(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question25()
     #question26()
