@@ -1063,6 +1063,14 @@ def question15(player_network_2018: nx.Graph, player_network_2019: nx.Graph, pla
 
         row = ["Degree centrality", n1, n2, n3, n4]
         writer.writerow(row)
+
+        n1 = nx.number_connected_components(player_network_2018)
+        n2 = nx.number_connected_components(player_network_2019)
+        n3 = nx.number_connected_components(player_network_2020)
+        n4 = nx.number_connected_components(player_network_aggregated)
+
+        row = ["Connected components", n1, n2, n3, n4]
+        writer.writerow(row)
     csvFile.close()
 
 
@@ -1494,7 +1502,7 @@ def main():
     #question10(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question11(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question12(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
-    question13(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
+    #question13(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question14(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question15(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question16(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
