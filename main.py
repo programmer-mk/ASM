@@ -302,7 +302,7 @@ def read_atp_matches_2020_dataset():
             players_2020_dictionary[loser_id] = [winner_id]
 
 
-def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
+def save_player_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
     #pos = nx.spring_layout(actor_graph, iterations=5000, )
     #pos = nx.random_layout(actor_graph)
     number_of_nodes: int = len(actor_graph.nodes())
@@ -312,7 +312,7 @@ def save_actor_graph_as_pdf(actor_graph: nx.Graph, color='r', file_name=""):
     nx.draw_networkx(actor_graph, pos, node_size=30, font_size='xx-small', with_labels=False, node_color=color)
     pl.axis('off')
     pl.show()
-    pl.savefig(file_name, format='pdf', dpi=900)
+    pl.savefig(f'results/{file_name}', format='pdf', dpi=900)
 
 
 def rank_category(rank):
@@ -1446,8 +1446,10 @@ def main():
     matches_2020_graph = create_atp_matches_2020_network()
     matches_year_aggregated_graph = create_aggregated_network(matches_2018_graph, matches_2019_graph, matches_2020_graph)
 
-    # save_actor_graph_as_pdf(matches_2018_graph, 'r', 'player_matches_2018_graph.pdf')
-    # save_actor_graph_as_pdf(matches_2019_graph, 'r', 'player_matches_2019_graph.pdf')
+    #save_player_graph_as_pdf(matches_2018_graph, 'r', 'players2018.pdf')
+    #save_player_graph_as_pdf(matches_2019_graph, 'r', 'players2019.pdf')
+    #save_player_graph_as_pdf(matches_2020_graph, 'r', 'players2020.pdf')
+    #save_player_graph_as_pdf(matches_year_aggregated_graph, 'r', 'players_aggregated.pdf')
 
     #question1(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
     #question2(matches_2018_graph,matches_2019_graph, matches_2020_graph, matches_year_aggregated_graph)
